@@ -127,6 +127,11 @@ contextBridge.exposeInMainWorld('api', {
     fullSync:    ()         => invoke('sync:fullSync'),
   },
 
+  autobackup: {
+    save: (cfg) => invoke('autobackup:save', cfg),
+    load: ()    => invoke('autobackup:load'),
+  },
+
   // ── Backup ───────────────────────────────────────────────
   backup: {
     create:     ()          => invoke('backup:create'),

@@ -84,7 +84,7 @@ module.exports = function registerProductHandlers() {
 
   ipcMain.handle('products:delete', (_, id) => {
     const db = getDB()
-    db.prepare(`UPDATE products SET deleted_at=datetime('now') WHERE id=?`).run(id)
+    db.prepare(`DELETE FROM products WHERE id=?`).run(id)
     const synced = db.prepare(`SELECT id FROM sync_queue WHERE table_name='products' AND record_id=? AND status='synced'`).get(id)
     if (synced) enqueue(db, 'products', 'delete', { id })
     else dequeue(db, 'products', id)

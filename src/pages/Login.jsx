@@ -42,16 +42,15 @@ export default function Login({ onLogin }) {
       >
         {/* Logo + title */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 16,
-            background: '#4f46e5',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          <img src="/IMS.png" alt="IMS" style={{
+            width: 72, height: 72, borderRadius: 16,
+            objectFit: 'contain',
             margin: '0 auto 14px',
-            boxShadow: '0 8px 24px rgba(79,70,229,0.4)',
-            fontSize: 26,
-          }}>🌸</div>
+            display: 'block',
+            filter: 'drop-shadow(0 8px 24px rgba(79,70,229,0.4))',
+          }} />
           <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 700, margin: 0, letterSpacing: '-0.3px' }}>
-            FloriManager
+            IMS
           </h1>
           <p style={{ color: '#94a3b8', fontSize: 13, marginTop: 4 }}>
             Inventory Management System

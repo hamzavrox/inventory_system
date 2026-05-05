@@ -15,6 +15,7 @@ jobs:
         with:
           node-version: 20
       - run: npm install
+      - run: npm run postinstall
       - run: npm run dist:win
       - uses: actions/upload-artifact@v4
         with:
@@ -29,6 +30,7 @@ jobs:
         with:
           node-version: 20
       - run: npm install
+      - run: npm run postinstall
       - run: npm run dist:mac
       - uses: actions/upload-artifact@v4
         with:
@@ -43,6 +45,7 @@ jobs:
         with:
           node-version: 20
       - run: npm install
+      - run: npm run postinstall
       - run: npm run dist:linux
       - uses: actions/upload-artifact@v4
         with:

@@ -61,7 +61,9 @@ export default function Sync() {
   }, [autoEnabled, autoTime])
 
   const saveAutoConfig = () => {
-    localStorage.setItem(AUTO_KEY, JSON.stringify({ enabled: autoEnabled, time: autoTime }))
+    const cfg = { enabled: autoEnabled, time: autoTime }
+    localStorage.setItem(AUTO_KEY, JSON.stringify(cfg))
+    window.api.autobackup.save(cfg).catch(() => {})
     setAutoMsg(`✓ Auto backup ${autoEnabled ? `enabled at ${autoTime}` : 'disabled'}`)
     setTimeout(() => setAutoMsg(''), 4000)
   }

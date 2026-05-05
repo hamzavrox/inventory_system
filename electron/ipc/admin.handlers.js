@@ -6,17 +6,26 @@ const fs   = require('fs')
 
 module.exports = function registerAdminHandlers() {
 
+  const { enqueue, dequeue } = require('./syncHelper')
+
   // ── Branches ────────────────────────────────────────────
   ipcMain.handle('branches:getAll', () =>
     getDB().prepare(`SELECT * FROM branches ORDER BY name`).all()
   )
   ipcMain.handle('branches:add', (_, { name, address, phone }) => {
+    const db = getDB()
     const id = uuid()
-    getDB().prepare(`INSERT INTO branches (id, name, address, phone) VALUES (?, ?, ?, ?)`).run(id, name, address || null, phone || null)
+    const row = { id, name, address: address || null, phone: phone || null }
+    db.prepare(`INSERT INTO branches (id, name, address, phone) VALUES (?, ?, ?, ?)`).run(id, name, row.address, row.phone)
+    enqueue(db, 'branches', 'insert', row)
     return { id, name }
   })
   ipcMain.handle('branches:delete', (_, id) => {
-    getDB().prepare(`DELETE FROM branches WHERE id = ?`).run(id)
+    const db = getDB()
+    db.prepare(`DELETE FROM branches WHERE id = ?`).run(id)
+    const synced = db.prepare(`SELECT id FROM sync_queue WHERE table_name='branches' AND record_id=? AND status='synced'`).get(id)
+    if (synced) enqueue(db, 'branches', 'delete', { id })
+    else dequeue(db, 'branches', id)
     return { success: true }
   })
 
@@ -28,12 +37,19 @@ module.exports = function registerAdminHandlers() {
     `).all()
   )
   ipcMain.handle('shops:add', (_, { name, branch_id }) => {
+    const db = getDB()
     const id = uuid()
-    getDB().prepare(`INSERT INTO shops (id, name, branch_id) VALUES (?, ?, ?)`).run(id, name, branch_id || null)
+    const row = { id, name, branch_id: branch_id || null }
+    db.prepare(`INSERT INTO shops (id, name, branch_id) VALUES (?, ?, ?)`).run(id, name, row.branch_id)
+    enqueue(db, 'shops', 'insert', row)
     return { id, name }
   })
   ipcMain.handle('shops:delete', (_, id) => {
-    getDB().prepare(`DELETE FROM shops WHERE id = ?`).run(id)
+    const db = getDB()
+    db.prepare(`DELETE FROM shops WHERE id = ?`).run(id)
+    const synced = db.prepare(`SELECT id FROM sync_queue WHERE table_name='shops' AND record_id=? AND status='synced'`).get(id)
+    if (synced) enqueue(db, 'shops', 'delete', { id })
+    else dequeue(db, 'shops', id)
     return { success: true }
   })
 
@@ -47,18 +63,27 @@ module.exports = function registerAdminHandlers() {
     `).all()
   )
   ipcMain.handle('users:add', (_, { name, username, password, role_id, branch_id }) => {
+    const db = getDB()
     const id = uuid()
-    getDB().prepare(`INSERT INTO users (id, name, username, password, role_id, branch_id) VALUES (?, ?, ?, ?, ?, ?)`)
-      .run(id, name, username, password, role_id || null, branch_id || null)
+    const row = { id, name, username, password, role_id: role_id || null, branch_id: branch_id || null }
+    db.prepare(`INSERT INTO users (id, name, username, password, role_id, branch_id) VALUES (?, ?, ?, ?, ?, ?)`)
+      .run(id, name, username, password, row.role_id, row.branch_id)
+    enqueue(db, 'users', 'insert', row)
     return { id, name, username }
   })
   ipcMain.handle('users:update', (_, { id, ...data }) => {
-    getDB().prepare(`UPDATE users SET name=@name, username=@username, role_id=@role_id, branch_id=@branch_id, active=@active WHERE id=@id`)
+    const db = getDB()
+    db.prepare(`UPDATE users SET name=@name, username=@username, role_id=@role_id, branch_id=@branch_id, active=@active WHERE id=@id`)
       .run({ id, ...data })
+    enqueue(db, 'users', 'update', { id, ...data })
     return { success: true }
   })
   ipcMain.handle('users:delete', (_, id) => {
-    getDB().prepare(`DELETE FROM users WHERE id = ?`).run(id)
+    const db = getDB()
+    db.prepare(`DELETE FROM users WHERE id = ?`).run(id)
+    const synced = db.prepare(`SELECT id FROM sync_queue WHERE table_name='users' AND record_id=? AND status='synced'`).get(id)
+    if (synced) enqueue(db, 'users', 'delete', { id })
+    else dequeue(db, 'users', id)
     return { success: true }
   })
   ipcMain.handle('users:login', (_, { username, password }) => {
@@ -75,16 +100,26 @@ module.exports = function registerAdminHandlers() {
     getDB().prepare(`SELECT * FROM roles`).all()
   )
   ipcMain.handle('roles:add', (_, { name, permissions }) => {
+    const db = getDB()
     const id = uuid()
-    getDB().prepare(`INSERT INTO roles (id, name, permissions) VALUES (?, ?, ?)`).run(id, name, JSON.stringify(permissions || {}))
+    const row = { id, name, permissions: JSON.stringify(permissions || {}) }
+    db.prepare(`INSERT INTO roles (id, name, permissions) VALUES (?, ?, ?)`).run(id, name, row.permissions)
+    enqueue(db, 'roles', 'insert', row)
     return { id, name }
   })
   ipcMain.handle('roles:update', (_, { id, name, permissions }) => {
-    getDB().prepare(`UPDATE roles SET name=?, permissions=? WHERE id=?`).run(name, JSON.stringify(permissions || {}), id)
+    const db = getDB()
+    const perms = JSON.stringify(permissions || {})
+    db.prepare(`UPDATE roles SET name=?, permissions=? WHERE id=?`).run(name, perms, id)
+    enqueue(db, 'roles', 'update', { id, name, permissions: perms })
     return { success: true }
   })
   ipcMain.handle('roles:delete', (_, id) => {
-    getDB().prepare(`DELETE FROM roles WHERE id=?`).run(id)
+    const db = getDB()
+    db.prepare(`DELETE FROM roles WHERE id=?`).run(id)
+    const synced = db.prepare(`SELECT id FROM sync_queue WHERE table_name='roles' AND record_id=? AND status='synced'`).get(id)
+    if (synced) enqueue(db, 'roles', 'delete', { id })
+    else dequeue(db, 'roles', id)
     return { success: true }
   })
 
@@ -101,8 +136,6 @@ module.exports = function registerAdminHandlers() {
       ORDER BY l.created_at DESC LIMIT 500
     `).all()
   )
-
-  const { enqueue, dequeue } = require('./syncHelper')
 
   // ── Discounts ────────────────────────────────────────────
   ipcMain.handle('discounts:getAll', () =>
@@ -252,6 +285,14 @@ module.exports = function registerAdminHandlers() {
     if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true })
     require('electron').shell.openPath(destDir)
     return { success: true }
+  })
+
+  // ── Cleanup deleted records ─────────────────────────────────
+  ipcMain.handle('db:cleanup', () => {
+    const db = getDB()
+    const p = db.prepare(`DELETE FROM products WHERE deleted_at IS NOT NULL`).run()
+    const c = db.prepare(`DELETE FROM customers WHERE deleted_at IS NOT NULL`).run()
+    return { products: p.changes, customers: c.changes }
   })
 
   // ── Full Sync ────────────────────────────────────────────
