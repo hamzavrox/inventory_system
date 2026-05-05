@@ -122,9 +122,10 @@ contextBridge.exposeInMainWorld('api', {
   // ── Sync ────────────────────────────────────────────────
   sync: {
     run:         (url, token) => invoke('sync:run', url, token),
-    status:      ()         => invoke('sync:status'),
-    resetFailed: ()         => invoke('sync:resetFailed'),
-    fullSync:    ()         => invoke('sync:fullSync'),
+    pullAll:     (url, token) => invoke('sync:pullAll', url, token),
+    status:      ()           => invoke('sync:status'),
+    resetFailed: ()           => invoke('sync:resetFailed'),
+    fullSync:    ()           => invoke('sync:fullSync'),
   },
 
   autobackup: {

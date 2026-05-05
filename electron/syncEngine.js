@@ -150,6 +150,39 @@ async function runSync(apiUrl, authToken) {
   return { synced: push.synced, failed: push.failed, pulled: pull.pulled }
 }
 
+// Pull ALL data from server (since beginning of time) — for fresh installs
+async function pullAll(apiUrl, authToken) {
+  if (!apiUrl) return { pulled: 0, skipped: true }
+  const db = getDB()
+
+  const res = await httpRequest(
+    `${normalizeUrl(apiUrl)}/sync/pull?since=${encodeURIComponent('1970-01-01T00:00:00Z')}`,
+    { headers: { 'Authorization': `Bearer ${authToken || ''}` } }
+  )
+
+  if (!res.ok) throw new Error(`Pull failed: HTTP ${res.status}`)
+
+  const { data } = await res.json()
+  let pulled = 0
+
+  for (const [table, rows] of Object.entries(data)) {
+    for (const row of rows) {
+      try {
+        const cols    = Object.keys(row)
+        const vals    = Object.values(row).map(v => v instanceof Date ? v.toISOString() : v)
+        const setCols = cols.filter(c => c !== 'id').map(c => `${c}=excluded.${c}`).join(', ')
+        db.prepare(`
+          INSERT INTO ${table} (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})
+          ON CONFLICT(id) DO UPDATE SET ${setCols}
+        `).run(...vals)
+        pulled++
+      } catch { }
+    }
+  }
+
+  return { pulled }
+}
+
 function getSyncStatus() {
   const db = getDB()
   return {
@@ -164,4 +197,4 @@ function resetFailed() {
   return { success: true }
 }
 
-module.exports = { runSync, getSyncStatus, resetFailed }
+module.exports = { runSync, getSyncStatus, resetFailed, pullAll }

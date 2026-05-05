@@ -9,6 +9,7 @@ const TABS = ['Local Backup', 'Auto Backup', 'Restore', 'Backup History']
 export default function Sync() {
   const [syncStatus, setSyncStatus] = useState({ pending: 0, failed: 0, synced: 0 })
   const [syncing,    setSyncing]    = useState(false)
+  const [pulling,    setPulling]    = useState(false)
   const [syncResult, setSyncResult] = useState(null)
   const [tab,        setTab]        = useState(0)
   const [backups,    setBackups]    = useState([])
@@ -100,6 +101,23 @@ export default function Sync() {
       loadStatus()
     } catch (e) { setSyncResult({ error: e.message }) }
     setSyncing(false)
+  }
+
+  const handlePullAll = async () => {
+    const url   = apiUrl.trim()
+    const token = apiToken.trim()
+    if (!url) return setSyncResult({ error: 'Server URL set karo pehle.' })
+    if (!confirm('Server se sab data pull hoga aur local data update ho jayega. Continue?')) return
+    setPulling(true); setSyncResult(null)
+    try {
+      const res = await window.api.sync.pullAll(url, token)
+      setSyncResult({ pulled: res.pulled, pullOnly: true })
+      loadStatus()
+    } catch (e) {
+      const msg = e.message || ''
+      setSyncResult({ error: msg.includes('fetch failed') || msg.includes('ECONNREFUSED') ? 'Cannot connect to server. Make sure server is running at ' + url : msg })
+    }
+    setPulling(false)
   }
 
   const handleResetFailed = async () => { await window.api.sync.resetFailed(); loadStatus() }
@@ -204,23 +222,26 @@ export default function Sync() {
           {/* Sync result */}
           {syncResult && (
             <div style={{ background: syncResult.error ? '#fef2f2' : syncResult.skipped ? '#f8fafc' : '#ecfdf5', border: `1px solid ${syncResult.error ? '#fecaca' : syncResult.skipped ? '#e2e8f0' : '#bbf7d0'}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: syncResult.error ? '#dc2626' : syncResult.skipped ? '#64748b' : '#059669' }}>
-              {syncResult.error ? `✗ ${syncResult.error}` : syncResult.skipped ? 'ℹ No server configured — offline mode.' : syncResult.fullSync ? `✓ Full Sync — ${syncResult.synced} synced` : `✓ Synced ${syncResult.synced} record${syncResult.synced !== 1 ? 's' : ''}${syncResult.failed > 0 ? ` · ${syncResult.failed} failed` : ''}`}
+              {syncResult.error ? `✗ ${syncResult.error}` : syncResult.skipped ? 'ℹ No server configured — offline mode.' : syncResult.pullOnly ? `✓ Pulled ${syncResult.pulled} records from server` : syncResult.fullSync ? `✓ Full Sync — ${syncResult.synced} synced` : `✓ Synced ${syncResult.synced} record${syncResult.synced !== 1 ? 's' : ''}${syncResult.failed > 0 ? ` · ${syncResult.failed} failed` : ''}`}
             </div>
           )}
 
           {/* Action buttons */}
           <div style={{ display: 'flex', gap: 8 }}>
-            <button style={{ ...C.btn, flex: 1, justifyContent: 'center' }} onClick={handleSync} disabled={syncing}>
-              <RefreshCw size={13} className={syncing ? 'animate-spin' : ''} />
+            <button style={{ ...C.btn, flex: 1, justifyContent: 'center' }} onClick={handleSync} disabled={syncing || pulling}>
+              <RefreshCw size={13} />
               {syncing ? 'Syncing…' : 'Sync Now'}
             </button>
-            <button style={{ ...C.btn2, flexShrink: 0 }} onClick={handleFullSync} disabled={syncing}>
+            <button style={{ ...C.btn2, flexShrink: 0 }} onClick={handleFullSync} disabled={syncing || pulling}>
               <Database size={13} /> Full Sync
             </button>
             {syncStatus.failed > 0 && (
               <button style={C.btn2} onClick={handleResetFailed}><AlertTriangle size={13} /> Retry</button>
             )}
           </div>
+          <button style={{ ...C.btn2, justifyContent: 'center', background: '#ecfdf5', border: '1px solid #bbf7d0', color: '#059669' }} onClick={handlePullAll} disabled={syncing || pulling}>
+            <Database size={13} color="#059669" /> {pulling ? 'Pulling…' : 'Pull All from Server (Fresh Install)'}
+          </button>
         </div>
 
         {/* ── Right: Tabs ── */}

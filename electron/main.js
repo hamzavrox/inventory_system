@@ -3,7 +3,7 @@ const { app, BrowserWindow, ipcMain, shell, Tray, Menu, nativeImage } = require(
 const path = require('path')
 const { initDB } = require('./db/database')
 const { registerHandlers } = require('./ipc/handlers')
-const { runSync, getSyncStatus, resetFailed } = require('./syncEngine')
+const { runSync, getSyncStatus, resetFailed, pullAll } = require('./syncEngine')
 
 let win
 let tray
@@ -103,11 +103,18 @@ app.whenReady().then(() => {
   tray.setContextMenu(contextMenu)
   tray.on('click', () => { win.isVisible() ? win.hide() : win.show() })
 
-  ipcMain.handle('sync:run', async (_, url, token) => {
+  ipcMain.handle('sync:run',         async (_, url, token) => {
     const apiUrl   = url   || process.env.API_URL
     const apiToken = token || process.env.API_TOKEN
     if (!apiUrl) return { synced: 0, skipped: true }
     return runSync(apiUrl, apiToken)
+  })
+
+  ipcMain.handle('sync:pullAll',      async (_, url, token) => {
+    const apiUrl   = url   || process.env.API_URL
+    const apiToken = token || process.env.API_TOKEN
+    if (!apiUrl) return { pulled: 0, skipped: true }
+    return pullAll(apiUrl, apiToken)
   })
 
   ipcMain.handle('sync:status',     () => getSyncStatus())
