@@ -2,9 +2,9 @@ name: Build FloriManager
 
 on:
   push:
-    tags:
-      - 'v*'        # v1.0.0 tag push karne par build hoga
-  workflow_dispatch: # Manual trigger bhi kar sakte ho
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build-windows:
