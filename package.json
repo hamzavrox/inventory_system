@@ -1,0 +1,89 @@
+{
+  "name": "flor_management_system",
+  "private": true,
+  "version": "0.0.0",
+  "homepage": ".",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
+    "build": "vite build",
+    "preview": "vite preview",
+    "postinstall": "electron-builder install-app-deps",
+    "dist:win": "vite build && electron-builder --win --publish never",
+    "dist:mac": "vite build && electron-builder --mac --publish never",
+    "dist:linux": "vite build && electron-builder --linux --publish never",
+    "dist:all": "vite build && electron-builder --win --mac --linux --publish never"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.2.4",
+    "@tanstack/react-query": "^5.100.5",
+    "better-sqlite3": "^12.9.0",
+    "concurrently": "^9.2.1",
+    "dotenv": "^17.4.2",
+    "electron-reload": "^2.0.0-alpha.1",
+    "framer-motion": "^12.38.0",
+    "jsbarcode": "^3.12.3",
+    "lucide-react": "^1.11.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-router-dom": "^7.14.2",
+    "tailwindcss": "^4.2.4",
+    "uuid": "^14.0.0",
+    "wait-on": "^9.0.5",
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.4",
+    "@eslint/js": "^10.0.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "cross-env": "^10.1.0",
+    "electron": "^41.3.0",
+    "electron-builder": "^26.8.1",
+    "eslint": "^10.2.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.5.0",
+    "vite": "^8.0.10"
+  },
+  "build": {
+    "appId": "com.ims.inventory",
+    "productName": "IMS",
+    "copyright": "Copyright © 2025 IMS",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**",
+      "electron/**",
+      "node_modules/**",
+      "public/**"
+    ],
+    "extraResources": [
+      { "from": "electron", "to": "electron" }
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ],
+      "icon": "public/IMS.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "IMS"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "public/IMS.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "public/IMS.png"
+    }
+  }
+}
