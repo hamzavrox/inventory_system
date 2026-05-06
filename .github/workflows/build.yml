@@ -7,46 +7,97 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ✅ Windows Build
   build-windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
-      - run: npm run postinstall
-      - run: npm run dist:win
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Rebuild native modules
+        run: npm run postinstall
+
+      - name: Build Windows
+        run: npm run dist:win
+
       - uses: actions/upload-artifact@v4
         with:
           name: FloriManager-Windows
           path: release/*.exe
 
-  build-mac:
-    runs-on: macos-latest
+  # ✅ Mac Intel Build (x64)
+  build-mac-intel:
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
-      - run: npm run postinstall
-      - run: npm run dist:mac
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Rebuild native modules
+        run: npm run postinstall
+
+      - name: Build Mac Intel (x64)
+        run: npm run dist:mac:x64 
+
       - uses: actions/upload-artifact@v4
         with:
-          name: FloriManager-Mac
+          name: FloriManager-Mac-Intel
           path: release/*.dmg
 
+  # ✅ Mac Apple Silicon Build (arm64)
+  build-mac-arm:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Rebuild native modules
+        run: npm run postinstall
+
+      - name: Build Mac ARM (arm64)
+        run: npm run dist:mac:arm64 
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FloriManager-Mac-ARM
+          path: release/*.dmg
+
+  # ✅ Linux Build
   build-linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
-      - run: npm run postinstall
-      - run: npm run dist:linux
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Rebuild native modules
+        run: npm run postinstall
+
+      - name: Build Linux
+        run: npm run dist:linux
+
       - uses: actions/upload-artifact@v4
         with:
           name: FloriManager-Linux
