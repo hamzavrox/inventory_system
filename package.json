@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "postinstall": "electron-builder install-app-deps",
     "dist:win": "vite build && electron-builder --win --publish never",
-    "dist:mac": "vite build && electron-builder --mac --universal --publish never",
+    "dist:mac:arm": "vite build && electron-builder --mac --arm64 --publish never",
+    "dist:mac:intel": "vite build && electron-builder --mac --x64 --publish never",
     "dist:linux": "vite build && electron-builder --linux --publish never",
     "dist:all": "vite build && electron-builder --win --mac --linux --publish never"
   },
@@ -79,7 +80,7 @@
       "shortcutName": "IMS"
     },
     "mac": {
-      "target": { "target": "dmg", "arch": ["universal"] },
+      "target": "dmg",
       "icon": "public/IMS.png"
     },
     "linux": {
