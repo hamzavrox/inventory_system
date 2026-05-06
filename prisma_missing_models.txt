@@ -1,0 +1,36 @@
+// Yeh models apne server ke prisma/schema.prisma mein add karo
+
+model branches {
+  id         String   @id
+  name       String
+  address    String?
+  phone      String?
+  created_at DateTime @default(now())
+}
+
+model shops {
+  id         String   @id
+  branch_id  String?
+  name       String
+  created_at DateTime @default(now())
+}
+
+model sync_queue {
+  id         String   @id
+  table_name String
+  record_id  String
+  operation  String
+  payload    String?  @db.Text
+  status     String   @default("pending")
+  retries    Int      @default(0)
+  created_at DateTime @default(now())
+  synced_at  DateTime?
+}
+
+model backups {
+  id         String   @id
+  path       String?
+  type       String   @default("local")
+  size_kb    Int?
+  created_at DateTime @default(now())
+}

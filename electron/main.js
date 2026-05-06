@@ -53,40 +53,50 @@ app.whenReady().then(() => {
   registerHandlers()
 
   // ── Auto Backup Scheduler (main process — works even if Sync page not open) ──
-  setInterval(() => {
+  function runAutoBackupIfNeeded() {
     try {
-      const cfg = JSON.parse(require('fs').readFileSync(
-        path.join(app.getPath('userData'), 'auto_backup.json'), 'utf8'
-      ))
+      const fs  = require('fs')
+      const cfgFile  = path.join(app.getPath('userData'), 'auto_backup.json')
+      const lastFile = path.join(app.getPath('userData'), 'auto_backup_last.txt')
+      if (!fs.existsSync(cfgFile)) return
+      const cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'))
       if (!cfg.enabled) return
-      const now  = new Date()
+
       const [h, m] = (cfg.time || '02:00').split(':').map(Number)
-      if (now.getHours() === h && now.getMinutes() === m) {
-        const key = `${now.toDateString()}_${cfg.time}`
-        const lastFile = path.join(app.getPath('userData'), 'auto_backup_last.txt')
-        const last = require('fs').existsSync(lastFile) ? require('fs').readFileSync(lastFile, 'utf8').trim() : ''
-        if (last !== key) {
-          require('fs').writeFileSync(lastFile, key)
-          // trigger backup via IPC handler directly
-          const { ipcMain: ipc } = require('electron')
-          const db      = require('./db/database').getDB()
-          const srcPath = path.join(app.getPath('userData'), 'inventory.db')
-          const pad     = n => String(n).padStart(2, '0')
-          const stamp   = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`
-          const fileName = `inventory-${stamp}.db`
-          db.pragma('wal_checkpoint(TRUNCATE)')
-          const size_kb = Math.round(require('fs').statSync(srcPath).size / 1024)
-          const localDir = path.join(app.getPath('documents'), 'FloriManager Backups')
-          if (!require('fs').existsSync(localDir)) require('fs').mkdirSync(localDir, { recursive: true })
-          require('fs').copyFileSync(srcPath, path.join(localDir, fileName))
-          const { v4: uuid } = require('uuid')
-          db.prepare(`INSERT INTO backups (id, path, type, size_kb) VALUES (?, ?, 'local', ?)`)
-            .run(uuid(), path.join(localDir, fileName), size_kb)
-          if (win) win.webContents.send('auto:backup:done', { size_kb })
-        }
+      const now  = new Date()
+      const last = fs.existsSync(lastFile) ? fs.readFileSync(lastFile, 'utf8').trim() : ''
+
+      // Check today's scheduled time has passed but backup not done yet
+      const scheduledToday = new Date(now)
+      scheduledToday.setHours(h, m, 0, 0)
+      const todayKey = `${now.toDateString()}_${cfg.time}`
+
+      if (now >= scheduledToday && last !== todayKey) {
+        fs.writeFileSync(lastFile, todayKey)
+        const db      = require('./db/database').getDB()
+        const srcPath = path.join(app.getPath('userData'), 'inventory.db')
+        const pad     = n => String(n).padStart(2, '0')
+        const stamp   = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`
+        const fileName = `inventory-${stamp}.db`
+        db.pragma('wal_checkpoint(TRUNCATE)')
+        const localDir = path.join(app.getPath('documents'), 'FloriManager Backups')
+        if (!fs.existsSync(localDir)) fs.mkdirSync(localDir, { recursive: true })
+        const destPath = path.join(localDir, fileName)
+        fs.copyFileSync(srcPath, destPath)
+        const size_kb = Math.round(fs.statSync(destPath).size / 1024)
+        const { v4: uuid } = require('uuid')
+        db.prepare(`INSERT INTO backups (id, path, type, size_kb) VALUES (?, ?, 'local', ?)`).run(uuid(), destPath, size_kb)
+        if (win) win.webContents.send('auto:backup:done', { size_kb })
+        console.log(`[AutoBackup] Created: ${fileName} (${size_kb} KB)`)
       }
-    } catch {}
-  }, 60000)
+    } catch (e) { console.error('[AutoBackup] Error:', e.message) }
+  }
+
+  // Run on startup (catches missed backups)
+  setTimeout(runAutoBackupIfNeeded, 3000)
+
+  // Run every minute (catches real-time scheduled time)
+  setInterval(runAutoBackupIfNeeded, 60000)
 
   // ── System Tray ──
   const iconPath = process.env.NODE_ENV === 'development'

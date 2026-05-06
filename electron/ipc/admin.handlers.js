@@ -316,6 +316,8 @@ module.exports = function registerAdminHandlers() {
       { name: 'transactions',     query: `SELECT * FROM transactions` },
       { name: 'customer_ledger',  query: `SELECT * FROM customer_ledger` },
       { name: 'returns',          query: `SELECT * FROM returns` },
+      { name: 'sync_queue',        query: `SELECT * FROM sync_queue` },
+      { name: 'backups',           query: `SELECT * FROM backups` },
     ]
     let total = 0
     for (const { name, query } of tables) {

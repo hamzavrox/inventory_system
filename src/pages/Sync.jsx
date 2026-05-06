@@ -61,11 +61,15 @@ export default function Sync() {
     return () => clearInterval(autoTimerRef.current)
   }, [autoEnabled, autoTime])
 
-  const saveAutoConfig = () => {
+  const saveAutoConfig = async () => {
     const cfg = { enabled: autoEnabled, time: autoTime }
     localStorage.setItem(AUTO_KEY, JSON.stringify(cfg))
-    window.api.autobackup.save(cfg).catch(() => {})
-    setAutoMsg(`✓ Auto backup ${autoEnabled ? `enabled at ${autoTime}` : 'disabled'}`)
+    try {
+      await window.api.autobackup.save(cfg)
+      setAutoMsg(`✓ Auto backup ${autoEnabled ? `enabled at ${autoTime}` : 'disabled'}`)
+    } catch (e) {
+      setAutoMsg(`✗ Save failed: ${e.message}`)
+    }
     setTimeout(() => setAutoMsg(''), 4000)
   }
 
