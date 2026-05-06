@@ -17,7 +17,7 @@ function createWindow() {
     title: 'IMS',
     icon: process.env.NODE_ENV === 'development'
       ? path.join(__dirname, '../public/IMS.png')
-      : path.join(process.resourcesPath, 'app/public/IMS.png'),
+      : path.join(process.resourcesPath, 'public/IMS.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -101,7 +101,7 @@ app.whenReady().then(() => {
   // ── System Tray ──
   const iconPath = process.env.NODE_ENV === 'development'
     ? path.join(__dirname, '../public/IMS.png')
-    : path.join(process.resourcesPath, 'app/public/IMS.png')
+    : path.join(process.resourcesPath, 'public/IMS.png')
   const trayIcon = nativeImage.createFromPath(iconPath)
   tray = new Tray(trayIcon.resize({ width: 16, height: 16 }))
   const contextMenu = Menu.buildFromTemplate([

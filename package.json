@@ -62,7 +62,8 @@
       "public/**"
     ],
     "extraResources": [
-      { "from": "electron", "to": "electron" }
+      { "from": "electron", "to": "electron" },
+      { "from": "public", "to": "public" }
     ],
     "win": {
       "target": [
