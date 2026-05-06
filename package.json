@@ -78,7 +78,10 @@
       "shortcutName": "IMS"
     },
     "mac": {
-      "target": "dmg",
+      "target": [
+        { "target": "dmg", "arch": ["x64"] },
+        { "target": "dmg", "arch": ["arm64"] }
+      ],
       "icon": "public/IMS.png"
     },
     "linux": {
