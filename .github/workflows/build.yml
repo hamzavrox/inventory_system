@@ -31,10 +31,10 @@ jobs:
           name: FloriManager-Windows
           path: release/*.exe
 
-  # ✅ Mac ARM Build (M1/M2/M3)
-  build-mac-arm:
+  # ✅ Mac Universal Build (Apple Silicon + Intel — single DMG)
+  build-mac:
     runs-on: macos-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -48,37 +48,12 @@ jobs:
       - name: Rebuild native modules
         run: npm run postinstall
 
-      - name: Build Mac ARM
-        run: npm run dist:mac:arm
+      - name: Build Mac Universal
+        run: npm run dist:mac
 
       - uses: actions/upload-artifact@v4
         with:
-          name: FloriManager-Mac-ARM64
-          path: release/*.dmg
-
-  # ✅ Mac Intel Build (x64)
-  build-mac-intel:
-    runs-on: macos-13
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Rebuild native modules
-        run: npm run postinstall
-
-      - name: Build Mac Intel
-        run: npm run dist:mac:intel
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: FloriManager-Mac-Intel
+          name: FloriManager-Mac-Universal
           path: release/*.dmg
 
   # ✅ Linux Build
