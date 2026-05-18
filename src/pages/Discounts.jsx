@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Plus, Trash2, Tag, Percent, DollarSign, CheckCircle, XCircle, Ticket, TrendingDown, Clock, Hash } from 'lucide-react'
 import Modal from '../components/Modal'
 import { FormField, Input, Btn } from '../components/FormField'
@@ -48,7 +48,7 @@ export default function Discounts() {
   const expired = discounts.filter(d => isExpired(d)).length
 
   const stats = [
-    { label: 'Total',   value: discounts.length, icon: Ticket,       bg: '#eef2ff', color: '#4f46e5' },
+    { label: 'Total',   value: discounts.length, icon: Ticket,       bg: '#ecfdf5', color: '#00deab' },
     { label: 'Active',  value: active,            icon: CheckCircle,  bg: '#ecfdf5', color: '#059669' },
     { label: 'Expired', value: expired,           icon: Clock,        bg: '#fef9c3', color: '#ca8a04' },
     { label: 'Fixed $', value: discounts.filter(d => d.type === 'fixed').length, icon: DollarSign, bg: '#fdf2f8', color: '#9333ea' },
@@ -103,10 +103,10 @@ export default function Discounts() {
                     borderRadius: 12, padding: '14px 16px', display: 'flex', alignItems: 'center',
                     gap: 12, opacity: expired ? 0.7 : 1,
                     boxShadow: '0 1px 3px rgba(0,0,0,.05)',
-                    borderLeft: `4px solid ${expired ? '#f87171' : isPercent ? '#4f46e5' : '#059669'}`
+                    borderLeft: `4px solid ${expired ? '#f87171' : isPercent ? '#00deab' : '#059669'}`
                   }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 10, background: isPercent ? '#eef2ff' : '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {isPercent ? <Percent size={17} color="#4f46e5" /> : <DollarSign size={17} color="#059669" />}
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: isPercent ? '#ecfdf5' : '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {isPercent ? <Percent size={17} color="#00deab" /> : <DollarSign size={17} color="#059669" />}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -114,7 +114,7 @@ export default function Discounts() {
                           ? <span style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: '#1e293b', background: '#f1f5f9', padding: '2px 8px', borderRadius: 6, letterSpacing: 1 }}>{d.code}</span>
                           : <span style={{ fontSize: 12, color: '#94a3b8', fontStyle: 'italic' }}>No code</span>
                         }
-                        <span style={{ fontSize: 13, fontWeight: 600, color: isPercent ? '#4f46e5' : '#059669' }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: isPercent ? '#00deab' : '#059669' }}>
                           {isPercent ? `${d.value}% off` : `$${fmt(d.value)} off`}
                         </span>
                         {expired && <span style={C.badge('#fef2f2', '#dc2626')}>Expired</span>}
@@ -147,14 +147,14 @@ export default function Discounts() {
           {/* Coupon Tester */}
           <div style={C.cardP}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-              <div style={{ width: 30, height: 30, borderRadius: 8, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Tag size={14} color="#4f46e5" />
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Tag size={14} color="#00deab" />
               </div>
               <p style={{ fontSize: 13, fontWeight: 600, color: '#334155', margin: 0 }}>Test Coupon</p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <FormField label="Coupon Code">
-                <Input placeholder="Enter code…" value={testCode} onChange={e => { setTestCode(e.target.value); setTestResult(null) }} />
+                <Input placeholder="Enter code..." value={testCode} onChange={e => { setTestCode(e.target.value); setTestResult(null) }} />
               </FormField>
               <FormField label="Order Amount ($)">
                 <Input type="number" min="0" placeholder="0.00" value={testAmt} onChange={e => { setTestAmt(e.target.value); setTestResult(null) }} />
@@ -187,7 +187,7 @@ export default function Discounts() {
             {[
               { label: 'Active',       value: active,                                          color: '#059669' },
               { label: 'Expired',      value: expired,                                         color: '#dc2626' },
-              { label: 'Percent Type', value: discounts.filter(d => d.type === 'percent').length, color: '#4f46e5' },
+              { label: 'Percent Type', value: discounts.filter(d => d.type === 'percent').length, color: '#00deab' },
               { label: 'Fixed Amount', value: discounts.filter(d => d.type === 'fixed').length,   color: '#9333ea' },
             ].map(({ label, value, color }) => (
               <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f8fafc' }}>
@@ -205,7 +205,7 @@ export default function Discounts() {
           <FormField label="Discount Type">
             <div style={{ display: 'flex', border: '1px solid #e2e8f0', borderRadius: 8, overflow: 'hidden' }}>
               {[['percent', '% Percent'], ['fixed', '$ Fixed Amount']].map(([v, l]) => (
-                <button key={v} onClick={() => f('type', v)} style={{ flex: 1, padding: '9px', fontSize: 13, fontWeight: 500, border: 'none', cursor: 'pointer', background: form.type === v ? '#4f46e5' : '#fff', color: form.type === v ? '#fff' : '#475569', transition: 'all .15s' }}>{l}</button>
+                <button key={v} onClick={() => f('type', v)} style={{ flex: 1, padding: '9px', fontSize: 13, fontWeight: 500, border: 'none', cursor: 'pointer', background: form.type === v ? '#00deab' : '#fff', color: form.type === v ? '#fff' : '#475569', transition: 'all .15s' }}>{l}</button>
               ))}
             </div>
           </FormField>
@@ -224,7 +224,7 @@ export default function Discounts() {
             <Input type="date" value={form.expires_at} onChange={e => f('expires_at', e.target.value)} />
           </FormField>
           {form.value > 0 && (
-            <div style={{ background: '#eef2ff', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#4f46e5' }}>
+            <div style={{ background: '#ecfdf5', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#00deab' }}>
               <strong>Preview:</strong> {form.type === 'percent' ? `${form.value}% off` : `$${fmt(form.value)} off`}
               {form.min_amount > 0 ? ` on orders over $${fmt(form.min_amount)}` : ''}
               {form.expires_at ? ` · Expires ${form.expires_at}` : ''}
@@ -241,3 +241,5 @@ export default function Discounts() {
     </div>
   )
 }
+
+

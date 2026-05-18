@@ -1,4 +1,4 @@
-const { v4: uuid } = require('uuid')
+﻿const { v4: uuid } = require('uuid')
 
 function enqueue(db, table, operation, payload) {
   try {
@@ -26,3 +26,5 @@ function dequeue(db, table, record_id) {
 }
 
 module.exports = { enqueue, dequeue }
+
+

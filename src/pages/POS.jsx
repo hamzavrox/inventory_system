@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import {
   Search, Plus, Minus, Trash2, ShoppingCart, User,
   CreditCard, Printer, RotateCcw, X, Check, Tag, Eye, Download
@@ -6,7 +6,7 @@ import {
 import Modal from '../components/Modal'
 import { FormField, Input, Select, Btn } from '../components/FormField'
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const fmt = (n) => Number(n || 0).toFixed(2)
 
 const styles = {
@@ -22,7 +22,7 @@ function InvoicePrint({ sale, items, customer }) {
   return (
     <div id="invoice-print" style={{ fontFamily: 'monospace', fontSize: 13, width: 320, padding: 16 }}>
       <div style={{ textAlign: 'center', marginBottom: 8 }}>
-        <strong style={{ fontSize: 16 }}>🌸 FloriManager</strong>
+        <strong style={{ fontSize: 16 }}>ðŸŒ¸ FloriManager</strong>
         <p style={{ margin: 0, fontSize: 11, color: '#666' }}>Invoice Receipt</p>
       </div>
       <hr />
@@ -63,7 +63,7 @@ function InvoicePrint({ sale, items, customer }) {
   )
 }
 
-// ─── Cart Item Row ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Cart Item Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function CartRow({ item, onQty, onRemove }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 12, borderBottom: '1px solid #f1f5f9', marginBottom: 12 }}>
@@ -86,7 +86,7 @@ function CartRow({ item, onQty, onRemove }) {
           <Plus size={12} style={{ margin: 'auto' }} />
         </button>
       </div>
-      <span style={{ width: 60, textAlign: 'right', fontSize: 13, fontWeight: 600, color: '#4f46e5' }}>${fmt(item.total)}</span>
+      <span style={{ width: 60, textAlign: 'right', fontSize: 13, fontWeight: 600, color: '#00deab' }}>${fmt(item.total)}</span>
       <button onClick={() => onRemove(item.cart_key)}
         style={{ ...styles.button, padding: '4px', color: '#dc2626', background: 'none', marginLeft: 4 }}
         onMouseEnter={e => e.currentTarget.style.color = '#991b1b'}
@@ -97,7 +97,7 @@ function CartRow({ item, onQty, onRemove }) {
   )
 }
 
-// ─── POS Page ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ POS Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function POS() {
   const [tab, setTab] = useState('pos')       // 'pos' | 'history'
   const [products, setProducts] = useState([])
@@ -183,10 +183,10 @@ export default function POS() {
 
   const buildInvoiceHtml = (sale, items) => {
     const rows = items.map(i => `<tr><td>${i.name}</td><td style="text-align:right">${i.qty}</td><td style="text-align:right">$${fmt(i.price)}</td><td style="text-align:right">$${fmt(i.total)}</td></tr>`).join('')
-    return `<!DOCTYPE html><html><head><style>body{font-family:monospace;font-size:12px;width:300px;margin:0 auto;padding:12px}hr{border:none;border-top:1px dashed #000;margin:6px 0}.center{text-align:center}table{width:100%;border-collapse:collapse}td,th{padding:2px 4px}th{text-align:left}th:not(:first-child),td:not(:first-child){text-align:right}.right{text-align:right}.bold{font-weight:bold}</style></head><body><div class="center bold" style="font-size:15px">🌸 FloriManager</div><div class="center" style="font-size:11px;color:#666">Invoice Receipt</div><hr/><p><b>Invoice:</b> ${sale.invoice_no}</p><p><b>Date:</b> ${sale.created_at?.slice(0,16).replace('T',' ')}</p>${sale.customer_name ? `<p><b>Customer:</b> ${sale.customer_name}</p>` : ''}<hr/><table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table><hr/><p class="right">Subtotal: <b>$${fmt(sale.subtotal)}</b></p>${sale.discount > 0 ? `<p class="right" style="color:green">Discount: -$${fmt(sale.discount)}</p>` : ''}${sale.tax > 0 ? `<p class="right">Tax: +$${fmt(sale.tax)}</p>` : ''}<p class="right bold" style="font-size:14px">Total: $${fmt(sale.total)}</p><p class="right">Paid: $${fmt(sale.paid)}</p>${sale.change_due > 0 ? `<p class="right">Change: $${fmt(sale.change_due)}</p>` : ''}<hr/><div class="center" style="font-size:11px;color:#888">Thank you for your purchase!</div></body></html>`
+    return `<!DOCTYPE html><html><head><style>body{font-family:monospace;font-size:12px;width:300px;margin:0 auto;padding:12px}hr{border:none;border-top:1px dashed #000;margin:6px 0}.center{text-align:center}table{width:100%;border-collapse:collapse}td,th{padding:2px 4px}th{text-align:left}th:not(:first-child),td:not(:first-child){text-align:right}.right{text-align:right}.bold{font-weight:bold}</style></head><body><div class="center bold" style="font-size:15px">ðŸŒ¸ FloriManager</div><div class="center" style="font-size:11px;color:#666">Invoice Receipt</div><hr/><p><b>Invoice:</b> ${sale.invoice_no}</p><p><b>Date:</b> ${sale.created_at?.slice(0,16).replace('T',' ')}</p>${sale.customer_name ? `<p><b>Customer:</b> ${sale.customer_name}</p>` : ''}<hr/><table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table><hr/><p class="right">Subtotal: <b>$${fmt(sale.subtotal)}</b></p>${sale.discount > 0 ? `<p class="right" style="color:green">Discount: -$${fmt(sale.discount)}</p>` : ''}${sale.tax > 0 ? `<p class="right">Tax: +$${fmt(sale.tax)}</p>` : ''}<p class="right bold" style="font-size:14px">Total: $${fmt(sale.total)}</p><p class="right">Paid: $${fmt(sale.paid)}</p>${sale.change_due > 0 ? `<p class="right">Change: $${fmt(sale.change_due)}</p>` : ''}<hr/><div class="center" style="font-size:11px;color:#888">Thank you for your purchase!</div></body></html>`
   }
 
-  // ── Add to cart (with variant check) ──────────────────
+  // â”€â”€ Add to cart (with variant check) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleProductClick = async (p) => {
     if (p.quantity <= 0) return
     const vars = await window.api.variants.getByProduct(p.id)
@@ -205,7 +205,7 @@ export default function POS() {
         if (existing.qty >= variant.quantity) return prev
         return prev.map(i => i.cart_key === key ? { ...i, qty: i.qty + 1, total: (i.qty + 1) * i.price } : i)
       }
-      return [...prev, { cart_key: key, product_id: product.id, variant_id: variant.id, name: `${product.name} — ${variant.name}`, price: variant.price || product.price, qty: 1, total: variant.price || product.price }]
+      return [...prev, { cart_key: key, product_id: product.id, variant_id: variant.id, name: `${product.name} - ${variant.name}`, price: variant.price || product.price, qty: 1, total: variant.price || product.price }]
     })
     setVarSelectModal(null)
   }
@@ -256,29 +256,29 @@ export default function POS() {
   }
   const clearCart = () => { setCart([]); setCustomer(null); setDiscount(0); setTaxPct(0); setCoupon(''); setCouponMsg(''); setAppliedMinAmount(0) }
 
-  // ── Totals ──────────────────────────────────────────────
+  // â”€â”€ Totals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const subtotal = cart.reduce((s, i) => s + i.total, 0)
   const taxAmount = subtotal * (taxPct / 100)
   const total = subtotal - discount + taxAmount
   const changeDue = (parseFloat(paid) || 0) - total
 
-  // ── Coupon ──────────────────────────────────────────────
+  // â”€â”€ Coupon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const applyCoupon = async () => {
     if (!coupon.trim()) return
     const res = await window.api.discounts.validate({ code: coupon.trim(), amount: subtotal })
     if (res.valid) {
       setDiscount(res.discount)
-      setCouponMsg(`✓ Coupon applied — $${fmt(res.discount)} off`)
+      setCouponMsg(`✔ Coupon applied - $${fmt(res.discount)} off`)
       const selected = discounts.find(d => (d.code || String(d.id)) === coupon.trim())
       setAppliedMinAmount(selected?.min_amount || 0)
     } else {
-      setCouponMsg('✗ Invalid or expired coupon')
+      setCouponMsg('✖ Invalid or expired coupon')
       setDiscount(0)
       setAppliedMinAmount(0)
     }
   }
 
-  // ── Checkout ────────────────────────────────────────────
+  // â”€â”€ Checkout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleCheckout = async () => {
     if (!cart.length) return
     const paidAmt = parseFloat(paid) || 0
@@ -301,28 +301,28 @@ export default function POS() {
     window.api.products.getAll().then(setProducts).catch(() => { })
   }
 
-  // ── Print receipt ───────────────────────────────────────
+  // â”€â”€ Print receipt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const printReceipt = () => {
     if (!receipt) return
     const { sale, items, customer: cust } = receipt
     const w = '300px'
     const rows = items.map(i => `<tr><td>${i.name}</td><td style="text-align:right">${i.qty}</td><td style="text-align:right">$${fmt(i.price)}</td><td style="text-align:right">$${fmt(i.total)}</td></tr>`).join('')
-    const html = `<!DOCTYPE html><html><head><style>body{font-family:monospace;font-size:12px;width:${w};margin:0 auto;padding:12px}hr{border:none;border-top:1px dashed #000;margin:6px 0}.center{text-align:center}table{width:100%;border-collapse:collapse}td,th{padding:2px 4px}th{text-align:left}th:not(:first-child){text-align:right}.right{text-align:right}.bold{font-weight:bold}</style></head><body><div class="center bold" style="font-size:15px">🌸 FloriManager</div><div class="center" style="font-size:11px;color:#666">Invoice Receipt</div><hr/><p><b>Invoice:</b> ${sale.invoice_no}</p><p><b>Date:</b> ${sale.created_at?.slice(0,16).replace('T',' ') || new Date().toLocaleString()}</p>${cust ? `<p><b>Customer:</b> ${cust.name}</p>` : ''}<hr/><table><thead><tr><th>Item</th><th style="text-align:right">Qty</th><th style="text-align:right">Price</th><th style="text-align:right">Total</th></tr></thead><tbody>${rows}</tbody></table><hr/><p class="right">Subtotal: <b>$${fmt(sale.subtotal)}</b></p>${sale.discount > 0 ? `<p class="right" style="color:green">Discount: -$${fmt(sale.discount)}</p>` : ''}${sale.tax > 0 ? `<p class="right">Tax: +$${fmt(sale.tax)}</p>` : ''}<p class="right bold" style="font-size:14px">Total: $${fmt(sale.total)}</p><p class="right">Paid: $${fmt(sale.paid)}</p>${sale.change_due > 0 ? `<p class="right">Change: $${fmt(sale.change_due)}</p>` : ''}<hr/><div class="center" style="font-size:11px;color:#888">Thank you for your purchase!</div></body></html>`
+    const html = `<!DOCTYPE html><html><head><style>body{font-family:monospace;font-size:12px;width:${w};margin:0 auto;padding:12px}hr{border:none;border-top:1px dashed #000;margin:6px 0}.center{text-align:center}table{width:100%;border-collapse:collapse}td,th{padding:2px 4px}th{text-align:left}th:not(:first-child){text-align:right}.right{text-align:right}.bold{font-weight:bold}</style></head><body><div class="center bold" style="font-size:15px">ðŸŒ¸ FloriManager</div><div class="center" style="font-size:11px;color:#666">Invoice Receipt</div><hr/><p><b>Invoice:</b> ${sale.invoice_no}</p><p><b>Date:</b> ${sale.created_at?.slice(0,16).replace('T',' ') || new Date().toLocaleString()}</p>${cust ? `<p><b>Customer:</b> ${cust.name}</p>` : ''}<hr/><table><thead><tr><th>Item</th><th style="text-align:right">Qty</th><th style="text-align:right">Price</th><th style="text-align:right">Total</th></tr></thead><tbody>${rows}</tbody></table><hr/><p class="right">Subtotal: <b>$${fmt(sale.subtotal)}</b></p>${sale.discount > 0 ? `<p class="right" style="color:green">Discount: -$${fmt(sale.discount)}</p>` : ''}${sale.tax > 0 ? `<p class="right">Tax: +$${fmt(sale.tax)}</p>` : ''}<p class="right bold" style="font-size:14px">Total: $${fmt(sale.total)}</p><p class="right">Paid: $${fmt(sale.paid)}</p>${sale.change_due > 0 ? `<p class="right">Change: $${fmt(sale.change_due)}</p>` : ''}<hr/><div class="center" style="font-size:11px;color:#888">Thank you for your purchase!</div></body></html>`
     window.api.print.html(html)
   }
 
-  // ── Return ──────────────────────────────────────────────
+  // â”€â”€ Return â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleReturn = async (sale) => {
     await window.api.sales.return({ sale_id: sale.id, reason: returnReason, refund_amount: sale.total })
     setReturnModal(null); setReturnReason(''); loadSales()
   }
 
-  // ── Product grid filter ─────────────────────────────────
+  // â”€â”€ Product grid filter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const filtered = products.filter(p =>
     !search || p.name.toLowerCase().includes(search.toLowerCase()) || (p.sku || '').toLowerCase().includes(search.toLowerCase())
   )
 
-  // ─────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', padding: '16px 20px' }}>
       {/* Tab bar */}
@@ -332,8 +332,8 @@ export default function POS() {
             style={{
               display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 12, fontSize: 13, fontWeight: 500,
               border: 'none', background: 'none', cursor: 'pointer', transition: 'all 0.15s', padding: '12px 12px',
-              borderBottom: tab === k ? '2px solid #4f46e5' : '2px solid transparent',
-              color: tab === k ? '#4f46e5' : '#94a3b8', whiteSpace: 'nowrap'
+              borderBottom: tab === k ? '2px solid #00deab' : '2px solid transparent',
+              color: tab === k ? '#00deab' : '#94a3b8', whiteSpace: 'nowrap'
             }}
             onMouseEnter={e => { if (tab !== k) e.currentTarget.style.color = '#64748b' }}
             onMouseLeave={e => { if (tab !== k) e.currentTarget.style.color = '#94a3b8' }}
@@ -343,17 +343,17 @@ export default function POS() {
         ))}
       </div>
 
-      {/* ── POS Tab ── */}
+      {/* â”€â”€ POS Tab â”€â”€ */}
       {tab === 'pos' && (
         <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden', gap: 16 }}>
-          {/* Left — Product Grid */}
+          {/* Left - Product Grid */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', ...styles.card }}>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ position: 'relative' }}>
                 <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
                 <input
                   ref={searchRef}
-                  placeholder="Search products by name or SKU…"
+                  placeholder="Search products by name or SKU..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   style={{ ...styles.input, paddingLeft: 32, fontSize: 12 }}
@@ -374,7 +374,7 @@ export default function POS() {
                       disabled={outOfStock}
                       style={{
                         textAlign: 'left', border: `1px solid ${outOfStock ? '#e2e8f0' : inCart ? '#c7d2fe' : '#e2e8f0'}`,
-                        background: outOfStock ? '#f8fafc' : inCart ? '#eef2ff' : '#fff',
+                        background: outOfStock ? '#f8fafc' : inCart ? '#ecfdf5' : '#fff',
                         padding: 12, borderRadius: 10, cursor: outOfStock ? 'not-allowed' : 'pointer',
                         opacity: outOfStock ? 0.5 : 1, transition: 'all 0.15s', position: 'relative',
                         boxShadow: inCart ? '0 1px 3px rgba(79, 70, 229, 0.1)' : '0 1px 2px rgba(0,0,0,0.05)',
@@ -383,13 +383,13 @@ export default function POS() {
                       onMouseLeave={e => { if (!outOfStock && !inCart) { e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)'; e.currentTarget.style.borderColor = '#e2e8f0' } }}
                     >
                       {inCart && (
-                        <span style={{ position: 'absolute', top: 6, right: 6, background: '#4f46e5', color: '#fff', fontSize: 10, width: 20, height: 20, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600 }}>
+                        <span style={{ position: 'absolute', top: 6, right: 6, background: '#00deab', color: '#fff', fontSize: 10, width: 20, height: 20, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600 }}>
                           {inCart.qty}
                         </span>
                       )}
                       <p style={{ fontSize: 12, fontWeight: 600, color: '#1e293b', margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: inCart ? 14 : 0 }}>{p.name}</p>
-                      <p style={{ fontSize: 11, color: '#94a3b8', margin: '0 0 6px' }}>{p.sku || p.category_name || '—'}</p>
-                      <p style={{ fontSize: 15, fontWeight: 700, color: '#4f46e5', margin: '0 0 4px' }}>${fmt(p.price)}</p>
+                      <p style={{ fontSize: 11, color: '#94a3b8', margin: '0 0 6px' }}>{p.sku || p.category_name || '-'}</p>
+                      <p style={{ fontSize: 15, fontWeight: 700, color: '#00deab', margin: '0 0 4px' }}>${fmt(p.price)}</p>
                       <p style={{ fontSize: 11, color: p.quantity <= p.low_stock_threshold ? '#d97706' : '#94a3b8', margin: 0 }}>
                         Stock: {p.quantity} {p.unit}
                       </p>
@@ -403,7 +403,7 @@ export default function POS() {
             </div>
           </div>
 
-          {/* Right — Cart */}
+          {/* Right - Cart */}
           <div style={{ width: 320, display: 'flex', flexDirection: 'column', background: '#fff', ...styles.card, overflow: 'hidden' }}>
             {/* Customer */}
             <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
@@ -442,20 +442,20 @@ export default function POS() {
                   onChange={e => { setCoupon(e.target.value); setCouponMsg(''); setDiscount(0) }}
                   style={{ ...styles.input, fontSize: 12 }}
                 >
-                  <option value="">— Select Discount / Coupon —</option>
+                  <option value="">- Select Discount / Coupon -</option>
                   {discounts.map(d => (
                     <option key={d.id} value={d.code || d.id}>
-                      {d.code ? `${d.code} — ` : ''}{d.type === 'percent' ? `${d.value}% off` : `$${fmt(d.value)} off`}{d.min_amount > 0 ? ` (min $${fmt(d.min_amount)})` : ''}
+                      {d.code ? `${d.code} - ` : ''}{d.type === 'percent' ? `${d.value}% off` : `$${fmt(d.value)} off`}{d.min_amount > 0 ? ` (min $${fmt(d.min_amount)})` : ''}
                     </option>
                   ))}
                 </select>
                 {coupon && (
-                  <button onClick={applyCoupon} style={{ ...styles.button, background: '#4f46e5', color: '#fff', padding: '6px 10px', fontSize: 11 }}
+                  <button onClick={applyCoupon} style={{ ...styles.button, background: '#00deab', color: '#fff', padding: '6px 10px', fontSize: 11 }}
                     onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
-                    onMouseLeave={e => e.currentTarget.style.background = '#4f46e5'}>Apply Discount</button>
+                    onMouseLeave={e => e.currentTarget.style.background = '#00deab'}>Apply Discount</button>
                 )}
               </div>
-              {couponMsg && <p style={{ fontSize: 11, color: couponMsg.startsWith('✓') ? '#059669' : '#dc2626', margin: 0 }}>{couponMsg}</p>}
+              {couponMsg && <p style={{ fontSize: 11, color: couponMsg.startsWith('✔') ? '#059669' : '#dc2626', margin: 0 }}>{couponMsg}</p>}
 
               {/* Tax */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -480,7 +480,7 @@ export default function POS() {
                   <span>Tax ({taxPct}%)</span><span>+${fmt(taxAmount)}</span>
                 </div>}
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 14, color: '#1e293b', paddingTop: 8, borderTop: '1px solid #f1f5f9', marginTop: 4 }}>
-                  <span>Total</span><span style={{ color: '#4f46e5' }}>${fmt(total)}</span>
+                  <span>Total</span><span style={{ color: '#00deab' }}>${fmt(total)}</span>
                 </div>
               </div>
 
@@ -492,9 +492,9 @@ export default function POS() {
                   <X size={13} /> Clear
                 </button>
                 <button onClick={() => { setPaid(fmt(total)); setPayModal(true) }} disabled={!cart.length} 
-                  style={{ ...styles.button, flex: 1, background: '#4f46e5', color: '#fff', padding: '8px 10px', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: !cart.length ? 0.5 : 1, cursor: !cart.length ? 'not-allowed' : 'pointer' }}
+                  style={{ ...styles.button, flex: 1, background: '#00deab', color: '#fff', padding: '8px 10px', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: !cart.length ? 0.5 : 1, cursor: !cart.length ? 'not-allowed' : 'pointer' }}
                   onMouseEnter={e => { if (cart.length) e.currentTarget.style.background = '#4338ca' }}
-                  onMouseLeave={e => { if (cart.length) e.currentTarget.style.background = '#4f46e5' }}>
+                  onMouseLeave={e => { if (cart.length) e.currentTarget.style.background = '#00deab' }}>
                   <CreditCard size={13} /> Pay
                 </button>
               </div>
@@ -503,7 +503,7 @@ export default function POS() {
         </div>
       )}
 
-      {/* ── History Tab ── */}
+      {/* â”€â”€ History Tab â”€â”€ */}
       {tab === 'history' && (
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', gap: 12 }}>
           <div style={{ ...styles.card, overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -523,11 +523,11 @@ export default function POS() {
                     <tr key={s.id} style={{ borderTop: '1px solid #f1f5f9', transition: 'background-color 0.15s' }}
                       onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontSize: 11, color: '#4f46e5', fontWeight: 600 }}>{s.invoice_no}</td>
+                      <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontSize: 11, color: '#00deab', fontWeight: 600 }}>{s.invoice_no}</td>
                       <td style={{ padding: '10px 14px', color: '#475569', fontSize: 12 }}>{s.customer_name || 'Walk-in'}</td>
                       <td style={{ padding: '10px 14px', textAlign: 'right', color: '#475569' }}>${fmt(s.subtotal)}</td>
-                      <td style={{ padding: '10px 14px', textAlign: 'right', color: '#059669' }}>{s.discount > 0 ? `-$${fmt(s.discount)}` : '—'}</td>
-                      <td style={{ padding: '10px 14px', textAlign: 'right', color: '#475569' }}>{s.tax > 0 ? `$${fmt(s.tax)}` : '—'}</td>
+                      <td style={{ padding: '10px 14px', textAlign: 'right', color: '#059669' }}>{s.discount > 0 ? `-$${fmt(s.discount)}` : '-'}</td>
+                      <td style={{ padding: '10px 14px', textAlign: 'right', color: '#475569' }}>{s.tax > 0 ? `$${fmt(s.tax)}` : '-'}</td>
                       <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 600, color: '#1e293b' }}>${fmt(s.total)}</td>
                       <td style={{ padding: '10px 14px' }}>
                         <span style={{ ...styles.badge('#f1f5f9', '#475569'), fontSize: 10 }}>{s.payment_method}</span>
@@ -541,9 +541,9 @@ export default function POS() {
                       <td style={{ padding: '10px 14px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                           <button onClick={() => handleViewInvoice(s)}
-                            style={{ ...styles.button, fontSize: 11, color: '#4f46e5', background: 'none', padding: 4, display: 'flex', alignItems: 'center', gap: 4 }}
+                            style={{ ...styles.button, fontSize: 11, color: '#00deab', background: 'none', padding: 4, display: 'flex', alignItems: 'center', gap: 4 }}
                             onMouseEnter={e => e.currentTarget.style.color = '#3730a3'}
-                            onMouseLeave={e => e.currentTarget.style.color = '#4f46e5'}>
+                            onMouseLeave={e => e.currentTarget.style.color = '#00deab'}>
                             <Eye size={11} /> View
                           </button>
                           {s.status === 'completed' && (
@@ -568,19 +568,19 @@ export default function POS() {
         </div>
       )}
 
-      {/* ── Variant Select Modal ── */}
-      <Modal open={!!varSelectModal} onClose={() => setVarSelectModal(null)} title={`Select Variant — ${varSelectModal?.product?.name}`}>
+      {/* â”€â”€ Variant Select Modal â”€â”€ */}
+      <Modal open={!!varSelectModal} onClose={() => setVarSelectModal(null)} title={`Select Variant - ${varSelectModal?.product?.name}`}>
         {varSelectModal && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {varSelectModal.variants.map(v => (
               <button key={v.id} onClick={() => addVariantToCart(varSelectModal.product, v)}
                 disabled={v.quantity <= 0}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: 10, background: v.quantity <= 0 ? '#f8fafc' : '#fff', cursor: v.quantity <= 0 ? 'not-allowed' : 'pointer', opacity: v.quantity <= 0 ? 0.5 : 1 }}
-                onMouseEnter={e => { if (v.quantity > 0) e.currentTarget.style.background = '#eef2ff' }}
+                onMouseEnter={e => { if (v.quantity > 0) e.currentTarget.style.background = '#ecfdf5' }}
                 onMouseLeave={e => { if (v.quantity > 0) e.currentTarget.style.background = '#fff' }}>
                 <span style={{ fontSize: 13, fontWeight: 500, color: '#1e293b' }}>{v.name}</span>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#4f46e5' }}>${fmt(v.price)}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#00deab' }}>${fmt(v.price)}</span>
                   <span style={{ fontSize: 11, color: v.quantity <= 0 ? '#ef4444' : '#059669' }}>Stock: {v.quantity}</span>
                 </div>
               </button>
@@ -593,18 +593,18 @@ export default function POS() {
         )}
       </Modal>
 
-      {/* ── Payment Modal ── */}
+      {/* â”€â”€ Payment Modal â”€â”€ */}
       <Modal open={payModal} onClose={() => setPayModal(false)} title="Complete Payment">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ background: '#eef2ff', borderRadius: 12, padding: 16, textAlign: 'center' }}>
+          <div style={{ background: '#ecfdf5', borderRadius: 12, padding: 16, textAlign: 'center' }}>
             <p style={{ fontSize: 11, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Amount Due</p>
-            <p style={{ fontSize: 36, fontWeight: 700, color: '#4f46e5', margin: '4px 0 0' }}>${fmt(total)}</p>
+            <p style={{ fontSize: 36, fontWeight: 700, color: '#00deab', margin: '4px 0 0' }}>${fmt(total)}</p>
           </div>
           <FormField label="Payment Method">
             <div style={{ display: 'flex', borderRadius: 8, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
               {[['cash', 'Cash'], ['card', 'Card'], ['transfer', 'Transfer']].map(([v, l]) => (
                 <button key={v} onClick={() => setPayMethod(v)}
-                  style={{ flex: 1, padding: '10px 12px', fontSize: 13, fontWeight: 500, border: 'none', background: payMethod === v ? '#4f46e5' : '#fff', color: payMethod === v ? '#fff' : '#475569', cursor: 'pointer', transition: 'all 0.15s' }}
+                  style={{ flex: 1, padding: '10px 12px', fontSize: 13, fontWeight: 500, border: 'none', background: payMethod === v ? '#00deab' : '#fff', color: payMethod === v ? '#fff' : '#475569', cursor: 'pointer', transition: 'all 0.15s' }}
                   onMouseEnter={e => { if (payMethod !== v) e.currentTarget.style.background = '#f8fafc' }}
                   onMouseLeave={e => { if (payMethod !== v) e.currentTarget.style.background = '#fff' }}>
                   {l}
@@ -626,9 +626,9 @@ export default function POS() {
           )}
           <div style={{ display: 'flex', gap: 10, paddingTop: 8 }}>
             <button onClick={handleCheckout} 
-              style={{ ...styles.button, flex: 1, background: '#4f46e5', color: '#fff', padding: '10px 12px', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              style={{ ...styles.button, flex: 1, background: '#00deab', color: '#fff', padding: '10px 12px', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
-              onMouseLeave={e => e.currentTarget.style.background = '#4f46e5'}>
+              onMouseLeave={e => e.currentTarget.style.background = '#00deab'}>
               <Check size={14} /> Confirm Sale
             </button>
             <button onClick={() => setPayModal(false)} 
@@ -639,7 +639,7 @@ export default function POS() {
         </div>
       </Modal>
 
-      {/* ── Receipt Modal ── */}
+      {/* â”€â”€ Receipt Modal â”€â”€ */}
       <Modal open={!!receipt} onClose={() => setReceipt(null)} title="Sale Complete">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ background: '#ecfdf5', border: '1px solid #d1fae5', borderRadius: 12, padding: 16, textAlign: 'center' }}>
@@ -653,9 +653,9 @@ export default function POS() {
           {receipt && <InvoicePrint {...receipt} />}
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={printReceipt} 
-              style={{ ...styles.button, flex: 1, background: '#4f46e5', color: '#fff', padding: '10px 12px', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              style={{ ...styles.button, flex: 1, background: '#00deab', color: '#fff', padding: '10px 12px', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
-              onMouseLeave={e => e.currentTarget.style.background = '#4f46e5'}>
+              onMouseLeave={e => e.currentTarget.style.background = '#00deab'}>
               <Printer size={13} /> Print Receipt
             </button>
             <button onClick={() => setReceipt(null)} 
@@ -666,13 +666,13 @@ export default function POS() {
         </div>
       </Modal>
 
-      {/* ── View Invoice Modal ── */}
-      <Modal open={!!viewInvoice} onClose={() => setViewInvoice(null)} title={`Invoice — ${viewInvoice?.sale?.invoice_no}`}>
+      {/* â”€â”€ View Invoice Modal â”€â”€ */}
+      <Modal open={!!viewInvoice} onClose={() => setViewInvoice(null)} title={`Invoice - ${viewInvoice?.sale?.invoice_no}`}>
         {viewInvoice && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {/* Invoice preview */}
             <div style={{ border: '1px dashed #e2e8f0', borderRadius: 8, padding: 16, fontFamily: 'monospace', fontSize: 12, maxWidth: 320, margin: '0 auto', width: '100%' }}>
-              <p style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, margin: '0 0 2px' }}>🌸 FloriManager</p>
+              <p style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, margin: '0 0 2px' }}>ðŸŒ¸ FloriManager</p>
               <p style={{ textAlign: 'center', fontSize: 11, color: '#888', margin: '0 0 8px' }}>Invoice Receipt</p>
               <hr style={{ border: 'none', borderTop: '1px dashed #ccc', margin: '6px 0' }} />
               <p style={{ margin: '3px 0' }}><b>Invoice:</b> {viewInvoice.sale.invoice_no}</p>
@@ -697,9 +697,9 @@ export default function POS() {
             <div style={{ display: 'flex', gap: 10 }}>
               <button
                 onClick={() => window.api.print.html(buildInvoiceHtml(viewInvoice.sale, viewInvoice.items))}
-                style={{ ...styles.button, flex: 1, background: '#4f46e5', color: '#fff', padding: '10px 12px', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                style={{ ...styles.button, flex: 1, background: '#00deab', color: '#fff', padding: '10px 12px', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                 onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
-                onMouseLeave={e => e.currentTarget.style.background = '#4f46e5'}>
+                onMouseLeave={e => e.currentTarget.style.background = '#00deab'}>
                 <Download size={13} /> Download / Print PDF
               </button>
               <button onClick={() => setViewInvoice(null)}
@@ -711,7 +711,7 @@ export default function POS() {
         )}
       </Modal>
 
-      {/* ── Return Modal ── */}
+      {/* â”€â”€ Return Modal â”€â”€ */}
       <Modal open={!!returnModal} onClose={() => { setReturnModal(null); setReturnReason('') }} title="Process Return">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ background: '#fee2e2', border: '1px solid #fecaca', borderRadius: 12, padding: 12 }}>
@@ -720,7 +720,7 @@ export default function POS() {
             <p style={{ fontSize: 11, color: '#b91c1c', margin: '4px 0 0' }}>Stock will be restored automatically.</p>
           </div>
           <FormField label="Return Reason">
-            <Input placeholder="e.g. Damaged, Wrong item…" value={returnReason}
+            <Input placeholder="e.g. Damaged, Wrong item..." value={returnReason}
               onChange={e => setReturnReason(e.target.value)} autoFocus />
           </FormField>
           <div style={{ display: 'flex', gap: 10 }}>
@@ -740,4 +740,6 @@ export default function POS() {
     </div>
   )
 }
+
+
 

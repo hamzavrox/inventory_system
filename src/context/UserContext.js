@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react'
+﻿import { createContext, useContext } from 'react'
 
 export const UserContext = createContext(null)
 
@@ -29,3 +29,5 @@ export function usePerm() {
     return (perms[module] || []).includes(right)
   }
 }
+
+

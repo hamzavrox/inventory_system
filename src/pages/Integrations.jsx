@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { CreditCard, ShoppingBag, CheckCircle, XCircle, RefreshCw, Save } from 'lucide-react'
 import { FormField, Input, Select, Btn } from '../components/FormField'
 import { C } from '../utils/pageStyles'
@@ -56,12 +56,12 @@ export default function Integrations() {
         {children}
         {testResult[type] && (
           <div style={{ background: testResult[type]==='success' ? '#ecfdf5' : '#fef2f2', border: `1px solid ${testResult[type]==='success' ? '#bbf7d0' : '#fecaca'}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: testResult[type]==='success' ? '#059669' : '#dc2626' }}>
-            {testResult[type]==='success' ? '✓ Configuration looks valid.' : '✗ Missing required credentials.'}
+            {testResult[type]==='success' ? '✔ Configuration looks valid.' : '✖ Missing required credentials.'}
           </div>
         )}
         <button style={{ ...C.btn2, justifyContent: 'center' }} onClick={() => testConnection(type)} disabled={testing[type]}>
           <RefreshCw size={13} className={testing[type] ? 'animate-spin' : ''} />
-          {testing[type] ? 'Testing…' : 'Test Connection'}
+          {testing[type] ? 'Testing...' : 'Test Connection'}
         </button>
       </div>
     </div>
@@ -74,14 +74,14 @@ export default function Integrations() {
           <h2 style={C.title}>Integrations</h2>
           <p style={C.subtitle}>Connect external services and payment gateways</p>
         </div>
-        <button style={C.btn} onClick={handleSave}><Save size={14} /> {saved ? 'Saved ✓' : 'Save All'}</button>
+        <button style={C.btn} onClick={handleSave}><Save size={14} /> {saved ? 'Saved ✔' : 'Save All'}</button>
       </div>
 
       <div style={C.g2}>
-        <IntCard icon={CreditCard} title="Payment Gateway" desc="Accept card payments at POS" iconBg="#eef2ff" iconColor="#4f46e5" connected={!!(cfg.payment_key && cfg.payment_secret)} type="payment">
+        <IntCard icon={CreditCard} title="Payment Gateway" desc="Accept card payments at POS" iconBg="#ecfdf5" iconColor="#00deab" connected={!!(cfg.payment_key && cfg.payment_secret)} type="payment">
           <FormField label="Gateway Provider">
             <Select value={cfg.payment_gateway} onChange={e => f('payment_gateway', e.target.value)}>
-              <option value="">— Select Provider —</option>
+              <option value="">- Select Provider -</option>
               <option value="stripe">Stripe</option>
               <option value="paypal">PayPal</option>
               <option value="square">Square</option>
@@ -89,13 +89,13 @@ export default function Integrations() {
               <option value="custom">Custom / Local</option>
             </Select>
           </FormField>
-          <FormField label="API Key / Publishable Key"><Input placeholder="pk_live_…" value={cfg.payment_key} onChange={e => f('payment_key', e.target.value)} /></FormField>
-          <FormField label="Secret Key"><Input type="password" placeholder="sk_live_…" value={cfg.payment_secret} onChange={e => f('payment_secret', e.target.value)} /></FormField>
+          <FormField label="API Key / Publishable Key"><Input placeholder="pk_live_..." value={cfg.payment_key} onChange={e => f('payment_key', e.target.value)} /></FormField>
+          <FormField label="Secret Key"><Input type="password" placeholder="sk_live_..." value={cfg.payment_secret} onChange={e => f('payment_secret', e.target.value)} /></FormField>
         </IntCard>
 
         <IntCard icon={ShoppingBag} title="Shopify Integration" desc="Sync products and orders with Shopify" iconBg="#ecfdf5" iconColor="#059669" connected={!!(cfg.shopify_store && cfg.shopify_token)} type="shopify">
           <FormField label="Store URL"><Input placeholder="your-store.myshopify.com" value={cfg.shopify_store} onChange={e => f('shopify_store', e.target.value)} /></FormField>
-          <FormField label="Admin API Access Token"><Input type="password" placeholder="shpat_…" value={cfg.shopify_token} onChange={e => f('shopify_token', e.target.value)} /></FormField>
+          <FormField label="Admin API Access Token"><Input type="password" placeholder="shpat_..." value={cfg.shopify_token} onChange={e => f('shopify_token', e.target.value)} /></FormField>
           <Toggle k="shopify_sync" label="Auto-sync Products" sub="Push product changes to Shopify automatically" />
         </IntCard>
       </div>
@@ -106,3 +106,5 @@ export default function Integrations() {
     </div>
   )
 }
+
+

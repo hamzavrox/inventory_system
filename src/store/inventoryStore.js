@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 
 export const useInventoryStore = create((set, get) => ({
   products: [],
@@ -30,3 +30,5 @@ export const useInventoryStore = create((set, get) => ({
     get().fetchProducts()
   },
 }))
+
+

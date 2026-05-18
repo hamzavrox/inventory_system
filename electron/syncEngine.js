@@ -1,9 +1,9 @@
-const { getDB } = require('./db/database')
+﻿const { getDB } = require('./db/database')
 const { v4: uuid } = require('uuid')
 
 const MAX_RETRIES = 3
 
-// ── HTTP helper using Node http/https (avoids Electron fetch issues) ─────────
+// â”€â”€ HTTP helper using Node http/https (avoids Electron fetch issues) â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function httpRequest(url, options = {}, body = null) {
   return new Promise((resolve, reject) => {
     const parsed   = new URL(url)
@@ -45,7 +45,7 @@ function normalizeUrl(url) {
   return (url || '').replace(/\/+$/, '')
 }
 
-// ── PUSH: SQLite sync_queue → server ─────────────────────────
+// â”€â”€ PUSH: SQLite sync_queue â†’ server â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function pushSync(apiUrl, authToken) {
   const db      = getDB()
   const pending = db.prepare(`
@@ -96,7 +96,7 @@ async function pushSync(apiUrl, authToken) {
   return { synced, failed }
 }
 
-// ── PULL: server → SQLite ─────────────────────────────────────
+// â”€â”€ PULL: server â†’ SQLite â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function pullSync(apiUrl, authToken) {
   const db = getDB()
 
@@ -140,7 +140,7 @@ async function pullSync(apiUrl, authToken) {
   return { pulled, pulledAt }
 }
 
-// ── MAIN SYNC ────────────────────────────────────────────────
+// â”€â”€ MAIN SYNC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function runSync(apiUrl, authToken) {
   if (!apiUrl) return { synced: 0, skipped: true }
 
@@ -150,7 +150,7 @@ async function runSync(apiUrl, authToken) {
   return { synced: push.synced, failed: push.failed, pulled: pull.pulled }
 }
 
-// Pull ALL data from server (since beginning of time) — for fresh installs
+// Pull ALL data from server (since beginning of time) â€” for fresh installs
 async function pullAll(apiUrl, authToken) {
   if (!apiUrl) return { pulled: 0, skipped: true }
   const db = getDB()
@@ -198,3 +198,5 @@ function resetFailed() {
 }
 
 module.exports = { runSync, getSyncStatus, resetFailed, pullAll }
+
+

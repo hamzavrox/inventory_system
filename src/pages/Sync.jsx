@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { RefreshCw, HardDrive, FolderOpen, Upload, CheckCircle, XCircle, Clock, AlertTriangle, Database } from 'lucide-react'
 import { C } from '../utils/pageStyles'
 
@@ -35,7 +35,7 @@ export default function Sync() {
     loadBackups()
     if (localStorage.getItem('db_restored_msg')) {
       localStorage.removeItem('db_restored_msg')
-      setRestoreMsg('✓ Database restored successfully! Please restart the app.')
+      setRestoreMsg('✔ Database restored successfully! Please restart the app.')
       timerRef.current = setTimeout(() => setRestoreMsg(''), 30000)
     }
   }, [])
@@ -51,8 +51,8 @@ export default function Sync() {
         if (localStorage.getItem('auto_backup_last') !== key) {
           localStorage.setItem('auto_backup_last', key)
           window.api.backup.create()
-            .then(res => { setAutoMsg(`✓ Auto backup saved — ${res.size_kb} KB`); loadBackups() })
-            .catch(() => setAutoMsg('✗ Auto backup failed'))
+            .then(res => { setAutoMsg(`✔ Auto backup saved - ${res.size_kb} KB`); loadBackups() })
+            .catch(() => setAutoMsg('✖ Auto backup failed'))
         }
       }
     }
@@ -66,16 +66,16 @@ export default function Sync() {
     localStorage.setItem(AUTO_KEY, JSON.stringify(cfg))
     try {
       await window.api.autobackup.save(cfg)
-      setAutoMsg(`✓ Auto backup ${autoEnabled ? `enabled at ${autoTime}` : 'disabled'}`)
+      setAutoMsg(`✔ Auto backup ${autoEnabled ? `enabled at ${autoTime}` : 'disabled'}`)
     } catch (e) {
-      setAutoMsg(`✗ Save failed: ${e.message}`)
+      setAutoMsg(`✖ Save failed: ${e.message}`)
     }
     setTimeout(() => setAutoMsg(''), 4000)
   }
 
   const saveServerConfig = () => {
     localStorage.setItem(SERVER_KEY, JSON.stringify({ url: apiUrl, token: apiToken }))
-    setServerMsg('✓ Server configuration saved')
+    setServerMsg('✔ Server configuration saved')
     setTimeout(() => setServerMsg(''), 3000)
   }
 
@@ -130,9 +130,9 @@ export default function Sync() {
     setBacking(true); setBackupMsg('')
     try {
       const res = await window.api.backup.create()
-      setBackupMsg(`✓ Saved to Local & Google Drive — ${res.size_kb} KB`)
+      setBackupMsg(`✔ Saved to Local & Google Drive - ${res.size_kb} KB`)
       loadBackups()
-    } catch (e) { setBackupMsg(`✗ Backup failed: ${e.message}`) }
+    } catch (e) { setBackupMsg(`✖ Backup failed: ${e.message}`) }
     setBacking(false)
   }
 
@@ -144,11 +144,11 @@ export default function Sync() {
       if (res.cancelled) {
         setRestoreMsg('Restore cancelled.')
       } else if (res.success) {
-        setRestoreMsg('✓ Restored! App is restarting…')
+        setRestoreMsg('✔ Restored! App is restarting...')
       } else {
-        setRestoreMsg(`✗ Restore failed: ${res.error || 'Unknown error'}`)
+        setRestoreMsg(`✖ Restore failed: ${res.error || 'Unknown error'}`)
       }
-    } catch (e) { setRestoreMsg(`✗ Restore failed: ${e.message}`) }
+    } catch (e) { setRestoreMsg(`✖ Restore failed: ${e.message}`) }
     setRestoring(false)
     timerRef.current = setTimeout(() => setRestoreMsg(''), 30000)
   }
@@ -161,7 +161,7 @@ export default function Sync() {
   ]
 
   const Msg = ({ msg, onClose }) => msg ? (
-    <div style={{ background: msg.startsWith('✓') ? '#ecfdf5' : msg.startsWith('✗') ? '#fef2f2' : '#f8fafc', border: `1px solid ${msg.startsWith('✓') ? '#bbf7d0' : msg.startsWith('✗') ? '#fecaca' : '#e2e8f0'}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: msg.startsWith('✓') ? '#059669' : msg.startsWith('✗') ? '#dc2626' : '#64748b', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div style={{ background: msg.startsWith('✔') ? '#ecfdf5' : msg.startsWith('✖') ? '#fef2f2' : '#f8fafc', border: `1px solid ${msg.startsWith('✔') ? '#bbf7d0' : msg.startsWith('✖') ? '#fecaca' : '#e2e8f0'}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: msg.startsWith('✔') ? '#059669' : msg.startsWith('✖') ? '#dc2626' : '#64748b', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <span>{msg}</span>
       {onClose && <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, lineHeight: 1, color: 'inherit', opacity: 0.6 }}>×</button>}
     </div>
@@ -176,11 +176,11 @@ export default function Sync() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
 
-        {/* ── Left: Cloud Sync ── */}
+        {/* â”€â”€ Left: Cloud Sync â”€â”€ */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', margin: 0 }}>Cloud Sync</p>
 
-          {/* Status Cards — compact row */}
+          {/* Status Cards - compact row */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
             {statusCards.map(({ label, value, icon: Icon, bg, color }) => (
               <div key={label} style={{ background: bg, borderRadius: 10, padding: '10px 8px', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -201,12 +201,12 @@ export default function Sync() {
                 <span style={{ fontSize: 11, color: '#475569' }}>{syncStatus.synced}/{total}</span>
               </div>
               <div style={{ height: 5, background: '#f1f5f9', borderRadius: 99, overflow: 'hidden' }}>
-                <div style={{ height: '100%', background: '#4f46e5', borderRadius: 99, width: `${(syncStatus.synced / total) * 100}%`, transition: 'width 0.4s' }} />
+                <div style={{ height: '100%', background: '#00deab', borderRadius: 99, width: `${(syncStatus.synced / total) * 100}%`, transition: 'width 0.4s' }} />
               </div>
             </div>
           )}
 
-          {/* Server Config — compact */}
+          {/* Server Config - compact */}
           <div style={C.cardP}>
             <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>Server Configuration</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -216,7 +216,7 @@ export default function Sync() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <label style={{ ...C.label, whiteSpace: 'nowrap', width: 70, margin: 0 }}>Token</label>
-                <input type="password" style={{ ...C.input, flex: 1 }} placeholder="Bearer token…" value={apiToken} onChange={e => setApiToken(e.target.value)} />
+                <input type="password" style={{ ...C.input, flex: 1 }} placeholder="Bearer token..." value={apiToken} onChange={e => setApiToken(e.target.value)} />
               </div>
               {serverMsg && <div style={{ background: '#ecfdf5', border: '1px solid #bbf7d0', borderRadius: 6, padding: '6px 10px', fontSize: 11, color: '#059669' }}>{serverMsg}</div>}
               <button style={{ ...C.btn, justifyContent: 'center' }} onClick={saveServerConfig}>Save</button>
@@ -226,7 +226,7 @@ export default function Sync() {
           {/* Sync result */}
           {syncResult && (
             <div style={{ background: syncResult.error ? '#fef2f2' : syncResult.skipped ? '#f8fafc' : '#ecfdf5', border: `1px solid ${syncResult.error ? '#fecaca' : syncResult.skipped ? '#e2e8f0' : '#bbf7d0'}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: syncResult.error ? '#dc2626' : syncResult.skipped ? '#64748b' : '#059669' }}>
-              {syncResult.error ? `✗ ${syncResult.error}` : syncResult.skipped ? 'ℹ No server configured — offline mode.' : syncResult.pullOnly ? `✓ Pulled ${syncResult.pulled} records from server` : syncResult.fullSync ? `✓ Full Sync — ${syncResult.synced} synced` : `✓ Synced ${syncResult.synced} record${syncResult.synced !== 1 ? 's' : ''}${syncResult.failed > 0 ? ` · ${syncResult.failed} failed` : ''}`}
+              {syncResult.error ? `✖ ${syncResult.error}` : syncResult.skipped ? 'ℹ No server configured - offline mode.' : syncResult.pullOnly ? `✔ Pulled ${syncResult.pulled} records from server` : syncResult.fullSync ? `✔ Full Sync - ${syncResult.synced} synced` : `✔ Synced ${syncResult.synced} record${syncResult.synced !== 1 ? 's' : ''}${syncResult.failed > 0 ? ` · ${syncResult.failed} failed` : ''}`}
             </div>
           )}
 
@@ -234,7 +234,7 @@ export default function Sync() {
           <div style={{ display: 'flex', gap: 8 }}>
             <button style={{ ...C.btn, flex: 1, justifyContent: 'center' }} onClick={handleSync} disabled={syncing || pulling}>
               <RefreshCw size={13} />
-              {syncing ? 'Syncing…' : 'Sync Now'}
+              {syncing ? 'Syncing...' : 'Sync Now'}
             </button>
             <button style={{ ...C.btn2, flexShrink: 0 }} onClick={handleFullSync} disabled={syncing || pulling}>
               <Database size={13} /> Full Sync
@@ -244,11 +244,11 @@ export default function Sync() {
             )}
           </div>
           <button style={{ ...C.btn2, justifyContent: 'center', background: '#ecfdf5', border: '1px solid #bbf7d0', color: '#059669' }} onClick={handlePullAll} disabled={syncing || pulling}>
-            <Database size={13} color="#059669" /> {pulling ? 'Pulling…' : 'Pull All from Server (Fresh Install)'}
+            <Database size={13} color="#059669" /> {pulling ? 'Pulling...' : 'Pull All from Server (Fresh Install)'}
           </button>
         </div>
 
-        {/* ── Right: Tabs ── */}
+        {/* â”€â”€ Right: Tabs â”€â”€ */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
           {/* Tab Bar */}
           <div style={{ ...C.tabBar, marginBottom: 14 }}>
@@ -261,8 +261,8 @@ export default function Sync() {
           {tab === 0 && (
             <div style={C.cardP}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Database size={18} color="#4f46e5" />
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Database size={18} color="#00deab" />
                 </div>
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', margin: 0 }}>SQLite Database Backup</p>
@@ -272,7 +272,7 @@ export default function Sync() {
               <Msg msg={backupMsg} />
               <div style={{ display: 'flex', gap: 8 }}>
                 <button style={{ ...C.btn, flex: 1, justifyContent: 'center' }} onClick={handleBackup} disabled={backing}>
-                  <HardDrive size={14} />{backing ? 'Backing up…' : 'Create Backup'}
+                  <HardDrive size={14} />{backing ? 'Backing up...' : 'Create Backup'}
                 </button>
                 <button style={{ ...C.btn2, flexShrink: 0 }} onClick={() => window.api.backup.openFolder()}>
                   <FolderOpen size={14} /> Open Folder
@@ -287,7 +287,7 @@ export default function Sync() {
               <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 14 }}>Auto Backup</p>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                 <span style={{ fontSize: 13, color: '#334155' }}>Enable Daily Auto Backup</span>
-                <div onClick={() => setAutoEnabled(v => !v)} style={{ width: 40, height: 22, borderRadius: 99, background: autoEnabled ? '#4f46e5' : '#e2e8f0', position: 'relative', cursor: 'pointer', transition: 'background 0.2s', flexShrink: 0 }}>
+                <div onClick={() => setAutoEnabled(v => !v)} style={{ width: 40, height: 22, borderRadius: 99, background: autoEnabled ? '#00deab' : '#e2e8f0', position: 'relative', cursor: 'pointer', transition: 'background 0.2s', flexShrink: 0 }}>
                   <div style={{ position: 'absolute', top: 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transition: 'transform 0.2s', transform: autoEnabled ? 'translateX(21px)' : 'translateX(3px)' }} />
                 </div>
               </div>
@@ -310,7 +310,7 @@ export default function Sync() {
               <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 14 }}>Restore</p>
               <Msg msg={restoreMsg} onClose={() => { setRestoreMsg(''); clearTimeout(timerRef.current) }} />
               <button style={{ ...C.btnD, width: '100%', justifyContent: 'center' }} onClick={handleRestore} disabled={restoring}>
-                <Upload size={14} />{restoring ? 'Restoring…' : 'Restore from Backup File…'}
+                <Upload size={14} />{restoring ? 'Restoring...' : 'Restore from Backup File...'}
               </button>
               <p style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', margin: '8px 0 0' }}>Opens a file picker to select a .db backup file</p>
             </div>
@@ -354,14 +354,14 @@ export default function Sync() {
                     return (
                       <div key={dateKey}>
                         <div style={{ padding: '6px 16px', background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label} — {d.toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label} - {d.toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                         </div>
                         {items.map((b, i) => {
                           const isLocal = b.type === 'local'
                           const isDrive = b.type === 'google_drive'
-                          const typeColor = isLocal ? '#4f46e5' : isDrive ? '#059669' : '#0ea5e9'
-                          const typeBg   = isLocal ? '#eef2ff' : isDrive ? '#ecfdf5' : '#e0f2fe'
-                          const typeLabel = isDrive ? '☁ Drive' : b.type === 'onedrive' ? '☁ OneDrive' : '💾 Local'
+                          const typeColor = isLocal ? '#00deab' : isDrive ? '#059669' : '#0ea5e9'
+                          const typeBg   = isLocal ? '#ecfdf5' : isDrive ? '#ecfdf5' : '#e0f2fe'
+                          const typeLabel = isDrive ? 'â˜ Drive' : b.type === 'onedrive' ? 'â˜ OneDrive' : '💾 Local'
                           const timeStr = new Date(b.created_at.includes('T') ? b.created_at : b.created_at.replace(' ','T')+'Z')
                             .toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit', hour12: true })
                           return (
@@ -398,3 +398,5 @@ export default function Sync() {
     </div>
   )
 }
+
+

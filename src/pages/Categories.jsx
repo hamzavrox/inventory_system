@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Plus, Trash2, ChevronRight, FolderOpen, Folder } from 'lucide-react'
 import Modal from '../components/Modal'
 import { FormField, Input, Select, Btn } from '../components/FormField'
@@ -87,7 +87,7 @@ export default function Categories() {
             <FormField label="Category Name *"><Input placeholder="e.g. Flowers, Accessories" value={form.name} onChange={e => f('name', e.target.value)} autoFocus /></FormField>
             <FormField label="Parent Category (optional)">
               <Select value={form.parent_id} onChange={e => f('parent_id', e.target.value)}>
-                <option value="">— Top Level —</option>
+                <option value="">- Top Level -</option>
                 {roots.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
             </FormField>
@@ -102,3 +102,5 @@ export default function Categories() {
     </div>
   )
 }
+
+

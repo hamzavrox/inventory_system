@@ -23,7 +23,7 @@ export default function Login({ onLogin }) {
   return (
     <div style={{
       position: 'fixed', inset: 0,
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e1b4b 100%)',
+      background: 'var(--bg-body)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       <motion.div
@@ -32,27 +32,26 @@ export default function Login({ onLogin }) {
         transition={{ duration: 0.3 }}
         style={{
           width: '100%', maxWidth: 380,
-          background: 'rgba(255,255,255,0.07)',
-          border: '1px solid rgba(255,255,255,0.12)',
-          borderRadius: 20,
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+          borderRadius: 'var(--radius-lg)',
           padding: '36px 32px 28px',
-          boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
-          backdropFilter: 'blur(12px)',
+          boxShadow: 'var(--shadow-md)',
         }}
       >
         {/* Logo + title */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <img src="/IMS.png" alt="IMS" style={{
+          <img src="./Inventory_Management_System_Logo.png" alt="IMS" style={{
             width: 72, height: 72, borderRadius: 16,
             objectFit: 'contain',
             margin: '0 auto 14px',
             display: 'block',
-            filter: 'drop-shadow(0 8px 24px rgba(79,70,229,0.4))',
+            filter: 'drop-shadow(0 4px 12px rgba(0, 222, 171, 0.2))',
           }} />
-          <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 700, margin: 0, letterSpacing: '-0.3px' }}>
+          <h1 style={{ color: 'var(--text-main)', fontSize: 22, fontWeight: 700, margin: 0, letterSpacing: '-0.3px' }}>
             IMS
           </h1>
-          <p style={{ color: '#94a3b8', fontSize: 13, marginTop: 4 }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>
             Inventory Management System
           </p>
         </div>
@@ -61,7 +60,7 @@ export default function Login({ onLogin }) {
         <form onSubmit={handleSubmit}>
           {/* Username */}
           <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', color: '#94a3b8', fontSize: 12, fontWeight: 500, marginBottom: 6 }}>
+            <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
               Username
             </label>
             <input
@@ -72,18 +71,21 @@ export default function Login({ onLogin }) {
               autoFocus
               style={{
                 width: '100%', boxSizing: 'border-box',
-                background: 'rgba(255,255,255,0.08)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                borderRadius: 10, padding: '10px 14px',
-                color: '#fff', fontSize: 14,
+                background: '#fff',
+                border: '1px solid var(--border-color)',
+                borderRadius: 8, padding: '10px 14px',
+                color: 'var(--text-main)', fontSize: 14,
                 outline: 'none',
+                transition: 'border-color 0.2s',
               }}
+              onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
+              onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
             />
           </div>
 
           {/* Password */}
           <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', color: '#94a3b8', fontSize: 12, fontWeight: 500, marginBottom: 6 }}>
+            <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
               Password
             </label>
             <div style={{ position: 'relative' }}>
@@ -94,12 +96,15 @@ export default function Login({ onLogin }) {
                 placeholder="••••••••"
                 style={{
                   width: '100%', boxSizing: 'border-box',
-                  background: 'rgba(255,255,255,0.08)',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  borderRadius: 10, padding: '10px 40px 10px 14px',
-                  color: '#fff', fontSize: 14,
+                  background: '#fff',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 8, padding: '10px 40px 10px 14px',
+                  color: 'var(--text-main)', fontSize: 14,
                   outline: 'none',
+                  transition: 'border-color 0.2s',
                 }}
+                onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
+                onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
               />
               <button
                 type="button"
@@ -107,7 +112,7 @@ export default function Login({ onLogin }) {
                 style={{
                   position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
                   background: 'none', border: 'none', cursor: 'pointer',
-                  color: '#64748b', display: 'flex', alignItems: 'center',
+                  color: 'var(--text-light)', display: 'flex', alignItems: 'center',
                 }}
               >
                 {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -118,9 +123,9 @@ export default function Login({ onLogin }) {
           {/* Error */}
           {error && (
             <div style={{
-              background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)',
+              background: '#fef2f2', border: '1px solid #fecaca',
               borderRadius: 8, padding: '8px 12px', marginBottom: 14,
-              color: '#fca5a5', fontSize: 12,
+              color: '#dc2626', fontSize: 12, fontWeight: 500
             }}>
               {error}
             </div>
@@ -132,8 +137,8 @@ export default function Login({ onLogin }) {
             disabled={loading}
             style={{
               width: '100%', padding: '11px',
-              background: loading ? '#4338ca' : '#4f46e5',
-              border: 'none', borderRadius: 10,
+              background: loading ? '#94a3b8' : 'var(--primary)',
+              border: 'none', borderRadius: 8,
               color: '#fff', fontSize: 14, fontWeight: 600,
               cursor: loading ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -144,15 +149,15 @@ export default function Login({ onLogin }) {
             {loading
               ? <span style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
               : <LogIn size={15} />}
-            {loading ? 'Signing in…' : 'Sign In'}
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
         {/* Default hint */}
-        <p style={{ textAlign: 'center', color: '#475569', fontSize: 11, marginTop: 18 }}>
-          Default: <span style={{ color: '#94a3b8', fontFamily: 'monospace' }}>admin</span>
+        <p style={{ textAlign: 'center', color: 'var(--text-light)', fontSize: 11, marginTop: 18 }}>
+          Default: <span style={{ color: 'var(--text-muted)', fontFamily: 'monospace' }}>admin</span>
           {' / '}
-          <span style={{ color: '#94a3b8', fontFamily: 'monospace' }}>admin123</span>
+          <span style={{ color: 'var(--text-muted)', fontFamily: 'monospace' }}>admin123</span>
         </p>
       </motion.div>
 
@@ -160,3 +165,5 @@ export default function Login({ onLogin }) {
     </div>
   )
 }
+
+

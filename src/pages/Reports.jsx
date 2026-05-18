@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { BarChart2, TrendingUp, Package, Receipt, GitBranch, DollarSign, Download } from 'lucide-react'
 import { C, fmt } from '../utils/pageStyles'
 import { usePerm } from '../context/UserContext'
@@ -44,7 +44,7 @@ function ReportTable({ cols, rows, emptyMsg = 'No data for selected period.' }) 
             {rows.map((r, i) => (
               <tr key={i} onMouseEnter={e => e.currentTarget.style.background='#f8fafc'} onMouseLeave={e => e.currentTarget.style.background='#fff'}>
                 {cols.map(c => {
-                  const val = c.render ? c.render(r) : (r[c.key] ?? '—')
+                  const val = c.render ? c.render(r) : (r[c.key] ?? '-')
                   const extraStyle = c.color ? { color: c.color(r) } : {}
                   return <td key={c.key} style={{ ...C.td(c.right), ...(c.bold ? { fontWeight: 600 } : {}), ...extraStyle }}>{val}</td>
                 })}
@@ -110,7 +110,7 @@ export default function Reports() {
       {/* Date range */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         {presets.map(p => (
-          <button key={p.l} onClick={() => { setFrom(p.f); setTo(p.t) }} style={{ padding: '5px 12px', fontSize: 12, borderRadius: 8, border: '1px solid', cursor: 'pointer', fontWeight: 500, background: from===p.f && to===p.t ? '#4f46e5' : '#fff', color: from===p.f && to===p.t ? '#fff' : '#475569', borderColor: from===p.f && to===p.t ? '#4f46e5' : '#e2e8f0' }}>{p.l}</button>
+          <button key={p.l} onClick={() => { setFrom(p.f); setTo(p.t) }} style={{ padding: '5px 12px', fontSize: 12, borderRadius: 8, border: '1px solid', cursor: 'pointer', fontWeight: 500, background: from===p.f && to===p.t ? '#00deab' : '#fff', color: from===p.f && to===p.t ? '#fff' : '#475569', borderColor: from===p.f && to===p.t ? '#00deab' : '#e2e8f0' }}>{p.l}</button>
         ))}
         <input type="date" value={from} onChange={e => setFrom(e.target.value)} style={{ ...C.input, width: 140 }} />
         <span style={{ fontSize: 12, color: '#94a3b8' }}>to</span>
@@ -126,7 +126,7 @@ export default function Reports() {
         ))}
       </div>
 
-      {loading && <div style={{ textAlign: 'center', padding: '48px 0', color: '#94a3b8', fontSize: 13 }}>Loading report…</div>}
+      {loading && <div style={{ textAlign: 'center', padding: '48px 0', color: '#94a3b8', fontSize: 13 }}>Loading report...</div>}
 
       {!loading && (
         <>
@@ -134,7 +134,7 @@ export default function Reports() {
           {tab === 'sales' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={C.g4}>
-                <StatCard label="Total Sales"     value={salesTotals.sales}                    color="#4f46e5" />
+                <StatCard label="Total Sales"     value={salesTotals.sales}                    color="#00deab" />
                 <StatCard label="Revenue"         value={`$${fmt(salesTotals.revenue)}`}        color="#059669" />
                 <StatCard label="Discounts Given" value={`$${fmt(salesTotals.discounts)}`}      color="#d97706" />
                 <StatCard label="Tax Collected"   value={`$${fmt(salesTotals.taxes)}`}          color="#475569" />
@@ -142,10 +142,10 @@ export default function Reports() {
               <ReportTable
                 cols={[
                   { key: 'day',         label: 'Date' },
-                  { key: 'total_sales', label: 'Sales',     right: true, bold: true, color: () => '#4f46e5' },
+                  { key: 'total_sales', label: 'Sales',     right: true, bold: true, color: () => '#00deab' },
                   { key: 'revenue',     label: 'Revenue',   right: true, bold: true, color: () => '#059669', render: r => `$${fmt(r.revenue)}` },
-                  { key: 'discounts',   label: 'Discounts', right: true, color: r => r.discounts > 0 ? '#d97706' : '#94a3b8', render: r => r.discounts > 0 ? `-$${fmt(r.discounts)}` : '—' },
-                  { key: 'taxes',       label: 'Tax',       right: true, render: r => r.taxes > 0 ? `$${fmt(r.taxes)}` : '—' },
+                  { key: 'discounts',   label: 'Discounts', right: true, color: r => r.discounts > 0 ? '#d97706' : '#94a3b8', render: r => r.discounts > 0 ? `-$${fmt(r.discounts)}` : '-' },
+                  { key: 'taxes',       label: 'Tax',       right: true, render: r => r.taxes > 0 ? `$${fmt(r.taxes)}` : '-' },
                 ]}
                 rows={data.sales || []}
               />
@@ -157,7 +157,7 @@ export default function Reports() {
             <ReportTable
               cols={[
                 { key: 'name',          label: 'Product' },
-                { key: 'total_qty',     label: 'Units Sold', right: true, bold: true, color: () => '#4f46e5' },
+                { key: 'total_qty',     label: 'Units Sold', right: true, bold: true, color: () => '#00deab' },
                 { key: 'total_revenue', label: 'Revenue',    right: true, bold: true, color: () => '#059669', render: r => `$${fmt(r.total_revenue)}` },
               ]}
               rows={data.products || []}
@@ -172,7 +172,7 @@ export default function Reports() {
                 {[
                   { label: 'Gross Revenue',  value: data.pl.revenue,      color: '#059669', border: false },
                   { label: 'Cost of Goods',  value: -data.pl.cogs,        color: '#dc2626', border: false },
-                  { label: 'Gross Profit',   value: data.pl.gross_profit, color: data.pl.gross_profit >= 0 ? '#4f46e5' : '#ea580c', border: true },
+                  { label: 'Gross Profit',   value: data.pl.gross_profit, color: data.pl.gross_profit >= 0 ? '#00deab' : '#ea580c', border: true },
                   { label: 'Other Expenses', value: -data.pl.expenses,    color: '#dc2626', border: false },
                   { label: 'Net Profit',     value: data.pl.net_profit,   color: data.pl.net_profit >= 0 ? '#059669' : '#dc2626', border: true },
                 ].map(({ label, value, color, border }) => (
@@ -209,15 +209,15 @@ export default function Reports() {
           {tab === 'tax' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={C.g2}>
-                <StatCard label="Total Tax Collected" value={`$${fmt((data.tax||[]).reduce((s,r) => s+(r.total_tax||0), 0))}`} color="#4f46e5" />
+                <StatCard label="Total Tax Collected" value={`$${fmt((data.tax||[]).reduce((s,r) => s+(r.total_tax||0), 0))}`} color="#00deab" />
                 <StatCard label="Taxable Revenue"     value={`$${fmt((data.tax||[]).reduce((s,r) => s+(r.revenue||0), 0))}`}   color="#059669" />
               </div>
               <ReportTable
                 cols={[
                   { key: 'day',       label: 'Date' },
                   { key: 'revenue',   label: 'Revenue',       right: true, render: r => `$${fmt(r.revenue)}` },
-                  { key: 'total_tax', label: 'Tax Collected', right: true, bold: true, color: () => '#4f46e5', render: r => `$${fmt(r.total_tax)}` },
-                  { key: 'pct',       label: 'Effective Rate',right: true, render: r => r.revenue > 0 ? `${((r.total_tax/r.revenue)*100).toFixed(1)}%` : '—' },
+                  { key: 'total_tax', label: 'Tax Collected', right: true, bold: true, color: () => '#00deab', render: r => `$${fmt(r.total_tax)}` },
+                  { key: 'pct',       label: 'Effective Rate',right: true, render: r => r.revenue > 0 ? `${((r.total_tax/r.revenue)*100).toFixed(1)}%` : '-' },
                 ]}
                 rows={data.tax || []}
               />
@@ -228,7 +228,7 @@ export default function Reports() {
           {tab === 'inventory' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={C.g3}>
-                <StatCard label="Total Products"    value={(data.inventory||[]).length}                                                    color="#4f46e5" />
+                <StatCard label="Total Products"    value={(data.inventory||[]).length}                                                    color="#00deab" />
                 <StatCard label="Total Stock Value" value={`$${fmt(invValue)}`}                                                            color="#059669" />
                 <StatCard label="Low / Out of Stock" value={(data.inventory||[]).filter(p => p.quantity <= p.low_stock_threshold).length}  color="#d97706" />
               </div>
@@ -238,7 +238,7 @@ export default function Reports() {
                   { key: 'category_name', label: 'Category' },
                   { key: 'quantity',      label: 'Stock',       right: true, bold: true, color: r => r.quantity <= r.low_stock_threshold ? '#ef4444' : '#059669' },
                   { key: 'cost_price',    label: 'Cost Price',  right: true, render: r => `$${fmt(r.cost_price)}` },
-                  { key: 'stock_value',   label: 'Stock Value', right: true, bold: true, color: () => '#4f46e5', render: r => `$${fmt(r.stock_value)}` },
+                  { key: 'stock_value',   label: 'Stock Value', right: true, bold: true, color: () => '#00deab', render: r => `$${fmt(r.stock_value)}` },
                 ]}
                 rows={data.inventory || []}
               />
@@ -250,7 +250,7 @@ export default function Reports() {
             <ReportTable
               cols={[
                 { key: 'branch',      label: 'Branch' },
-                { key: 'sales_count', label: 'Total Sales', right: true, bold: true, color: () => '#4f46e5' },
+                { key: 'sales_count', label: 'Total Sales', right: true, bold: true, color: () => '#00deab' },
                 { key: 'revenue',     label: 'Revenue',     right: true, bold: true, color: () => '#059669', render: r => `$${fmt(r.revenue)}` },
               ]}
               rows={data.branch || []}
@@ -262,3 +262,5 @@ export default function Reports() {
     </div>
   )
 }
+
+

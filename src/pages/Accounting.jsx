@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { TrendingUp, TrendingDown, DollarSign, BarChart2, Plus, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import Modal from '../components/Modal'
 import { FormField, Input, Select, Btn } from '../components/FormField'
@@ -22,7 +22,7 @@ function DateBar({ from, to, onChange }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
       {presets.map(p => (
-        <button key={p.l} onClick={() => onChange(p.f, p.t)} style={{ padding: '5px 12px', fontSize: 12, borderRadius: 8, border: '1px solid', cursor: 'pointer', fontWeight: 500, background: from===p.f && to===p.t ? '#4f46e5' : '#fff', color: from===p.f && to===p.t ? '#fff' : '#475569', borderColor: from===p.f && to===p.t ? '#4f46e5' : '#e2e8f0' }}>{p.l}</button>
+        <button key={p.l} onClick={() => onChange(p.f, p.t)} style={{ padding: '5px 12px', fontSize: 12, borderRadius: 8, border: '1px solid', cursor: 'pointer', fontWeight: 500, background: from===p.f && to===p.t ? '#00deab' : '#fff', color: from===p.f && to===p.t ? '#fff' : '#475569', borderColor: from===p.f && to===p.t ? '#00deab' : '#e2e8f0' }}>{p.l}</button>
       ))}
       <input type="date" value={from} onChange={e => onChange(e.target.value, to)} style={{ ...C.input, width: 140 }} />
       <span style={{ fontSize: 12, color: '#94a3b8' }}>to</span>
@@ -91,7 +91,7 @@ export default function Accounting() {
         {[
           { label: 'Total Income',  value: summary.income,  icon: TrendingUp,   bg: '#ecfdf5', ic: '#059669', sub: 'All income' },
           { label: 'Total Expense', value: summary.expense, icon: TrendingDown, bg: '#fef2f2', ic: '#dc2626', sub: 'All expenses' },
-          { label: 'Net Profit',    value: summary.profit,  icon: DollarSign,   bg: summary.profit >= 0 ? '#eef2ff' : '#fff7ed', ic: summary.profit >= 0 ? '#4f46e5' : '#ea580c', sub: summary.profit >= 0 ? 'Profitable' : 'Loss period' },
+          { label: 'Net Profit',    value: summary.profit,  icon: DollarSign,   bg: summary.profit >= 0 ? '#ecfdf5' : '#fff7ed', ic: summary.profit >= 0 ? '#00deab' : '#ea580c', sub: summary.profit >= 0 ? 'Profitable' : 'Loss period' },
         ].map(({ label, value, icon: Icon, bg, ic, sub }) => (
           <div key={label} style={{ ...C.cardP, display: 'flex', alignItems: 'flex-start', gap: 14 }}>
             <div style={{ width: 44, height: 44, borderRadius: 10, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -122,7 +122,7 @@ export default function Accounting() {
             {[
               { label: 'Total Revenue',  value: summary.income,  color: '#059669', barColor: '#34d399' },
               { label: 'Total Expenses', value: summary.expense, color: '#dc2626', barColor: '#f87171' },
-              { label: 'Net Profit',     value: summary.profit,  color: summary.profit >= 0 ? '#4f46e5' : '#ea580c', barColor: summary.profit >= 0 ? '#818cf8' : '#fb923c', border: true },
+              { label: 'Net Profit',     value: summary.profit,  color: summary.profit >= 0 ? '#00deab' : '#ea580c', barColor: summary.profit >= 0 ? '#818cf8' : '#fb923c', border: true },
             ].map(({ label, value, color, barColor, border }) => {
               const max = Math.max(summary.income, summary.expense, 1)
               return (
@@ -168,7 +168,7 @@ export default function Accounting() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', gap: 8 }}>
             {[['','All'],['income','Income'],['expense','Expense']].map(([v,l]) => (
-              <button key={v} onClick={() => setTypeFilter(v)} style={{ padding: '5px 14px', fontSize: 12, borderRadius: 8, border: '1px solid', cursor: 'pointer', fontWeight: 500, background: typeFilter===v ? '#4f46e5' : '#fff', color: typeFilter===v ? '#fff' : '#475569', borderColor: typeFilter===v ? '#4f46e5' : '#e2e8f0' }}>{l}</button>
+              <button key={v} onClick={() => setTypeFilter(v)} style={{ padding: '5px 14px', fontSize: 12, borderRadius: 8, border: '1px solid', cursor: 'pointer', fontWeight: 500, background: typeFilter===v ? '#00deab' : '#fff', color: typeFilter===v ? '#fff' : '#475569', borderColor: typeFilter===v ? '#00deab' : '#e2e8f0' }}>{l}</button>
             ))}
           </div>
           <div style={C.card}>
@@ -185,9 +185,9 @@ export default function Accounting() {
                           {t.type === 'income' ? <ArrowDownRight size={13} /> : <ArrowUpRight size={13} />}{t.type}
                         </span>
                       </td>
-                      <td style={{ ...C.td(), textTransform: 'capitalize', fontSize: 12 }}>{t.category || '—'}</td>
+                      <td style={{ ...C.td(), textTransform: 'capitalize', fontSize: 12 }}>{t.category || '-'}</td>
                       <td style={{ ...C.tdb(true), color: t.type === 'income' ? '#059669' : '#dc2626' }}>{t.type === 'income' ? '+' : '-'}${fmt(t.amount)}</td>
-                      <td style={{ ...C.td(), fontSize: 12, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.note || '—'}</td>
+                      <td style={{ ...C.td(), fontSize: 12, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.note || '-'}</td>
                       <td style={{ ...C.td(), fontSize: 12, whiteSpace: 'nowrap' }}>{t.created_at?.slice(0,16).replace('T',' ')}</td>
                     </tr>
                   ))}
@@ -203,7 +203,7 @@ export default function Accounting() {
       {tab === 2 && (
         <div style={C.cardP}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <BarChart2 size={16} color="#4f46e5" />
+            <BarChart2 size={16} color="#00deab" />
             <p style={{ fontSize: 13, fontWeight: 600, color: '#334155', margin: 0 }}>Daily Cash Flow</p>
           </div>
           {!byDay.length
@@ -238,7 +238,7 @@ export default function Accounting() {
                             <td style={C.td()}>{day}</td>
                             <td style={{ ...C.tdb(true), color: '#059669' }}>+${fmt(income)}</td>
                             <td style={{ ...C.tdb(true), color: '#dc2626' }}>-${fmt(expense)}</td>
-                            <td style={{ ...C.tdb(true), color: net >= 0 ? '#4f46e5' : '#ea580c' }}>{net >= 0 ? '+' : ''}${fmt(net)}</td>
+                            <td style={{ ...C.tdb(true), color: net >= 0 ? '#00deab' : '#ea580c' }}>{net >= 0 ? '+' : ''}${fmt(net)}</td>
                           </tr>
                         )
                       })}
@@ -267,7 +267,7 @@ export default function Accounting() {
             </Select>
           </FormField>
           <FormField label="Amount ($) *"><Input type="number" min="0.01" step="0.01" placeholder="0.00" value={form.amount} onChange={e => f('amount', e.target.value)} autoFocus /></FormField>
-          <FormField label="Note"><Input placeholder="Description or reference…" value={form.note} onChange={e => f('note', e.target.value)} /></FormField>
+          <FormField label="Note"><Input placeholder="Description or reference..." value={form.note} onChange={e => f('note', e.target.value)} /></FormField>
           <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
             <Btn onClick={handleSave}><Plus size={14} /> Save Entry</Btn>
             <Btn variant="secondary" onClick={() => setEntryModal(false)}>Cancel</Btn>
@@ -277,3 +277,5 @@ export default function Accounting() {
     </div>
   )
 }
+
+

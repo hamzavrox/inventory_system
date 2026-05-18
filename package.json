@@ -51,7 +51,7 @@
   "build": {
     "appId": "com.ims.inventory",
     "productName": "IMS",
-    "copyright": "Copyright © 2025 IMS",
+    "copyright": "Copyright Â© 2025 IMS",
     "directories": {
       "output": "release"
     },
@@ -69,7 +69,7 @@
       "target": [
         { "target": "nsis", "arch": ["x64"] }
       ],
-      "icon": "public/IMS.png"
+      "icon": "public/Inventory_Management_System_Logo.png"
     },
     "nsis": {
       "oneClick": false,
@@ -82,12 +82,14 @@
       "target": [
         { "target": "dmg", "arch": ["universal"] }
       ],
-      "icon": "public/IMS.png",
+      "icon": "public/Inventory_Management_System_Logo.png",
       "x64ArchFiles": "**/node_modules/**/*.node"
     },
     "linux": {
       "target": "AppImage",
-      "icon": "public/IMS.png"
+      "icon": "public/Inventory_Management_System_Logo.png"
     }
   }
 }
+
+

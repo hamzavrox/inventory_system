@@ -1,4 +1,4 @@
-const Database = require('better-sqlite3')
+﻿const Database = require('better-sqlite3')
 const path = require('path')
 const { app } = require('electron')
 const { schema, SCHEMA_VERSION } = require('./migrations')
@@ -20,7 +20,7 @@ function initDB() {
     _seedDefaults()
   }
 
-  // ── Run column migrations for existing databases ──────────
+  // â”€â”€ Run column migrations for existing databases â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   _migrateColumns()
 }
 
@@ -33,7 +33,7 @@ function _migrateColumns() {
     }
   }
 
-  // Products table — columns added after initial release
+  // Products table â€” columns added after initial release
   addCol('products', 'barcode',             'TEXT')
   addCol('products', 'brand_id',            'TEXT')
   addCol('products', 'category_id',         'TEXT')
@@ -41,7 +41,7 @@ function _migrateColumns() {
   addCol('products', 'unit',                "TEXT DEFAULT 'pcs'")
   addCol('products', 'low_stock_threshold', 'INTEGER DEFAULT 10')
 
-  // Stock log — batch tracking columns
+  // Stock log â€” batch tracking columns
   addCol('stock_log', 'batch_no',    'TEXT')
   addCol('stock_log', 'expiry_date', 'TEXT')
   addCol('stock_log', 'branch_id',   'TEXT')
@@ -60,7 +60,7 @@ function _seedDefaults() {
     roleId, 'Admin', JSON.stringify({ all: true })
   )
 
-  // Default admin user  (password: admin123 — change in production)
+  // Default admin user  (password: admin123 â€” change in production)
   db.prepare(`
     INSERT OR IGNORE INTO users (id, name, username, password, role_id, branch_id)
     VALUES (?, ?, ?, ?, ?, ?)
@@ -76,3 +76,5 @@ function reloadDB() {
 }
 
 module.exports = { initDB, getDB, reloadDB }
+
+

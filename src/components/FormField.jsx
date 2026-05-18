@@ -1,4 +1,4 @@
-const inputBase = {
+﻿const inputBase = {
   width: '100%',
   boxSizing: 'border-box',
   border: '1px solid #e2e8f0',
@@ -40,7 +40,7 @@ export function Input({ className = '', style = {}, ...props }) {
         ...inputBase,
         ...style,
       }}
-      onFocus={e => { e.target.style.borderColor = '#6366f1'; e.target.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.12)' }}
+      onFocus={e => { e.target.style.borderColor = '#00deab'; e.target.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.12)' }}
       onBlur={e  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.boxShadow = 'none' }}
     />
   )
@@ -56,7 +56,7 @@ export function Select({ className = '', style = {}, children, ...props }) {
         cursor: 'pointer',
         ...style,
       }}
-      onFocus={e => { e.target.style.borderColor = '#6366f1'; e.target.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.12)' }}
+      onFocus={e => { e.target.style.borderColor = '#00deab'; e.target.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.12)' }}
       onBlur={e  => { e.target.style.borderColor = '#e2e8f0'; e.target.style.boxShadow = 'none' }}
     >
       {children}
@@ -87,7 +87,7 @@ export function Btn({ variant = 'primary', size = 'md', className = '', style = 
   }
 
   const variants = {
-    primary:   { background: '#4f46e5', color: '#fff' },
+    primary:   { background: '#00deab', color: '#fff' },
     secondary: { background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' },
     danger:    { background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' },
     ghost:     { background: 'transparent', color: '#64748b' },
@@ -103,3 +103,5 @@ export function Btn({ variant = 'primary', size = 'md', className = '', style = 
     </button>
   )
 }
+
+

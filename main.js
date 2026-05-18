@@ -1,4 +1,4 @@
-// import { app, BrowserWindow } from 'electron';
+﻿// import { app, BrowserWindow } from 'electron';
 // import path from 'path';
 // import { fileURLToPath } from 'url';
 
@@ -44,3 +44,4 @@
 //     app.quit();
 //   }
 // });
+

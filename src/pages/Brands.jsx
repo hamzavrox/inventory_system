@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Plus, Trash2, Tag } from 'lucide-react'
 import Modal from '../components/Modal'
 import { FormField, Input, Btn } from '../components/FormField'
@@ -42,8 +42,8 @@ export default function Brands() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
         {brands.map(b => (
           <div key={b.id} style={{ ...C.cardP, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, position: 'relative', textAlign: 'center' }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Tag size={18} color="#4f46e5" />
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Tag size={18} color="#00deab" />
             </div>
             <span style={{ fontSize: 13, fontWeight: 500, color: '#334155' }}>{b.name}</span>
             {can('brands','delete') && (
@@ -72,3 +72,5 @@ export default function Brands() {
     </div>
   )
 }
+
+

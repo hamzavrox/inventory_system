@@ -16,8 +16,8 @@ function createWindow() {
     minHeight: 600,
     title: 'IMS',
     icon: process.env.NODE_ENV === 'development'
-      ? path.join(__dirname, '../public/IMS.png')
-      : path.join(process.resourcesPath, 'public/IMS.png'),
+      ? path.join(__dirname, '../public/Inventory_Management_System_Logo.png')
+      : path.join(process.resourcesPath, 'public/Inventory_Management_System_Logo.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -39,7 +39,7 @@ function createWindow() {
     }
   })
 
-  // Close button → minimize to tray instead of quit
+  // Close button â†’ minimize to tray instead of quit
   win.on('close', (e) => {
     if (!app.isQuiting) {
       e.preventDefault()
@@ -52,7 +52,7 @@ app.whenReady().then(() => {
   initDB()
   registerHandlers()
 
-  // ── Auto Backup Scheduler (main process — works even if Sync page not open) ──
+  // â”€â”€ Auto Backup Scheduler (main process â€” works even if Sync page not open) â”€â”€
   function runAutoBackupIfNeeded() {
     try {
       const fs  = require('fs')
@@ -98,10 +98,10 @@ app.whenReady().then(() => {
   // Run every minute (catches real-time scheduled time)
   setInterval(runAutoBackupIfNeeded, 60000)
 
-  // ── System Tray ──
+  // â”€â”€ System Tray â”€â”€
   const iconPath = process.env.NODE_ENV === 'development'
-    ? path.join(__dirname, '../public/IMS.png')
-    : path.join(process.resourcesPath, 'public/IMS.png')
+    ? path.join(__dirname, '../public/Inventory_Management_System_Logo.png')
+    : path.join(process.resourcesPath, 'public/Inventory_Management_System_Logo.png')
   const trayIcon = nativeImage.createFromPath(iconPath)
   tray = new Tray(trayIcon.resize({ width: 16, height: 16 }))
   const contextMenu = Menu.buildFromTemplate([
@@ -109,7 +109,7 @@ app.whenReady().then(() => {
     { type: 'separator' },
     { label: 'Quit',      click: () => { app.isQuiting = true; app.quit() } },
   ])
-  tray.setToolTip('IMS — Inventory Management')
+  tray.setToolTip('IMS â€” Inventory Management')
   tray.setContextMenu(contextMenu)
   tray.on('click', () => { win.isVisible() ? win.hide() : win.show() })
 
@@ -152,7 +152,7 @@ app.whenReady().then(() => {
   })
 })
 
-// ── Print HTML → PDF → open in system viewer ────────────────────────────────
+// â”€â”€ Print HTML â†’ PDF â†’ open in system viewer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const fs = require('fs')
 const os = require('os')
 ipcMain.handle('print:html', async (e, html) => {
@@ -172,6 +172,8 @@ ipcMain.handle('print:html', async (e, html) => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    // Don't quit — minimize to tray
+    // Don't quit â€” minimize to tray
   }
 })
+
+

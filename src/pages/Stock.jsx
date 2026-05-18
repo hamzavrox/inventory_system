@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { ArrowDownCircle, ArrowUpCircle, AlertTriangle, ArrowLeftRight, ClipboardList, Search, Filter } from 'lucide-react'
 import Modal from '../components/Modal'
 import { FormField, Input, Select, Btn } from '../components/FormField'
@@ -18,7 +18,7 @@ const emptyAdj = { productId: '', type: 'in', qty: 1, note: '', batch_no: '', ex
 const emptyTransfer = { product_id: '', from_shop_id: '', to_shop_id: '', quantity: 1, note: '' }
 
 function TypeBadge({ type }) {
-  const map = { in: ['#ecfdf5','#059669'], out: ['#fef2f2','#dc2626'], adjust: ['#fffbeb','#d97706'], transfer: ['#eff6ff','#3b82f6'] }
+  const map = { in: ['#ecfdf5','#059669'], out: ['#fef2f2','#dc2626'], adjust: ['#fffbeb','#d97706'], transfer: ['#ecfdf5','#00deab'] }
   const [bg, color] = map[type] || ['#f1f5f9','#64748b']
   return <span style={C.badge(bg, color)}>{type}</span>
 }
@@ -49,11 +49,11 @@ function OverviewTab({ products, onAdjust }) {
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <div style={C.searchWrap}>
           <span style={C.searchIcon}><Search size={13} /></span>
-          <input style={C.searchInput} placeholder="Search products…" value={search} onChange={e => setSearch(e.target.value)} />
+          <input style={C.searchInput} placeholder="Search products..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <div style={{ display: 'flex', border: '1px solid #e2e8f0', borderRadius: 8, overflow: 'hidden' }}>
           {[['all','All'],['low','Low Stock'],['out','Out of Stock']].map(([v,l]) => (
-            <button key={v} onClick={() => setFilter(v)} style={{ padding: '8px 14px', fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', background: filter === v ? '#4f46e5' : '#fff', color: filter === v ? '#fff' : '#475569' }}>{l}</button>
+            <button key={v} onClick={() => setFilter(v)} style={{ padding: '8px 14px', fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', background: filter === v ? '#00deab' : '#fff', color: filter === v ? '#fff' : '#475569' }}>{l}</button>
           ))}
         </div>
       </div>
@@ -78,8 +78,8 @@ function OverviewTab({ products, onAdjust }) {
                     onMouseLeave={e => e.currentTarget.style.background = isOut ? '#fff5f5' : isLow ? '#fffdf0' : '#fff'}
                   >
                     <td style={C.tdb()}>{p.name}</td>
-                    <td style={{ ...C.td(), fontFamily: 'monospace', fontSize: 11, color: '#94a3b8' }}>{p.sku || '—'}</td>
-                    <td style={{ ...C.td(), fontSize: 12 }}>{p.category_name || '—'}</td>
+                    <td style={{ ...C.td(), fontFamily: 'monospace', fontSize: 11, color: '#94a3b8' }}>{p.sku || '-'}</td>
+                    <td style={{ ...C.td(), fontSize: 12 }}>{p.category_name || '-'}</td>
                     <td style={{ ...C.tdb(true), color: isOut ? '#ef4444' : isLow ? '#f59e0b' : '#059669', fontSize: 15 }}>
                       {p.quantity} <span style={{ fontSize: 11, fontWeight: 400, color: '#94a3b8' }}>{p.unit}</span>
                     </td>
@@ -135,7 +135,7 @@ function AdjustTab({ products, preset, onDone }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <FormField label="Product *">
             <Select value={form.productId} onChange={e => f('productId', e.target.value)}>
-              <option value="">— Select Product —</option>
+              <option value="">- Select Product -</option>
               {products.map(p => <option key={p.id} value={p.id}>{p.name} (Stock: {p.quantity} {p.unit})</option>)}
             </Select>
           </FormField>
@@ -148,10 +148,10 @@ function AdjustTab({ products, preset, onDone }) {
                   {selected.quantity} <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8' }}>{selected.unit}</span>
                 </p>
               </div>
-              <span style={{ fontSize: 20, color: '#cbd5e1' }}>→</span>
+              <span style={{ fontSize: 20, color: '#cbd5e1' }}>â†’</span>
               <div style={{ flex: 1 }}>
                 <p style={{ fontSize: 11, color: '#94a3b8', margin: 0 }}>After Adjustment</p>
-                <p style={{ fontSize: 20, fontWeight: 700, margin: '2px 0 0', color: '#4f46e5' }}>
+                <p style={{ fontSize: 20, fontWeight: 700, margin: '2px 0 0', color: '#00deab' }}>
                   {form.type === 'out' ? Math.max(0, selected.quantity - (+form.qty || 0)) : selected.quantity + (+form.qty || 0)}
                   <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8' }}> {selected.unit}</span>
                 </p>
@@ -163,7 +163,7 @@ function AdjustTab({ products, preset, onDone }) {
             <FormField label="Quantity *"><Input type="number" min="1" value={form.qty} onChange={e => f('qty', e.target.value)} /></FormField>
             <FormField label="Batch No."><Input placeholder="Optional" value={form.batch_no} onChange={e => f('batch_no', e.target.value)} /></FormField>
             <FormField label="Expiry Date"><Input type="date" value={form.expiry_date} onChange={e => f('expiry_date', e.target.value)} /></FormField>
-            <FormField label="Note"><Input placeholder="Reason…" value={form.note} onChange={e => f('note', e.target.value)} /></FormField>
+            <FormField label="Note"><Input placeholder="Reason..." value={form.note} onChange={e => f('note', e.target.value)} /></FormField>
           </div>
 
           <div style={{ display: 'flex', gap: 8 }}>
@@ -190,7 +190,7 @@ function LogTab() {
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <div style={C.searchWrap}>
           <span style={C.searchIcon}><Search size={13} /></span>
-          <input style={C.searchInput} placeholder="Search by product…" value={search} onChange={e => setSearch(e.target.value)} />
+          <input style={C.searchInput} placeholder="Search by product..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select style={{ ...C.select, width: 150 }} value={type} onChange={e => setType(e.target.value)}>
           <option value="">All Types</option>
@@ -210,9 +210,9 @@ function LogTab() {
                   <td style={C.tdb()}>{l.product_name}</td>
                   <td style={C.td()}><TypeBadge type={l.type} /></td>
                   <td style={{ ...C.tdb(true), color: l.type === 'out' ? '#ef4444' : '#059669' }}>{l.type === 'out' ? '-' : '+'}{l.quantity}</td>
-                  <td style={{ ...C.td(), fontFamily: 'monospace', fontSize: 11 }}>{l.batch_no || '—'}</td>
-                  <td style={{ ...C.td(), fontSize: 12, color: l.expiry_date && new Date(l.expiry_date) < new Date() ? '#ef4444' : '#475569' }}>{l.expiry_date || '—'}</td>
-                  <td style={{ ...C.td(), fontSize: 12, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.note || '—'}</td>
+                  <td style={{ ...C.td(), fontFamily: 'monospace', fontSize: 11 }}>{l.batch_no || '-'}</td>
+                  <td style={{ ...C.td(), fontSize: 12, color: l.expiry_date && new Date(l.expiry_date) < new Date() ? '#ef4444' : '#475569' }}>{l.expiry_date || '-'}</td>
+                  <td style={{ ...C.td(), fontSize: 12, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.note || '-'}</td>
                   <td style={{ ...C.td(), fontSize: 12, whiteSpace: 'nowrap' }}>{l.created_at?.slice(0,16).replace('T',' ')}</td>
                 </tr>
               ))}
@@ -256,10 +256,10 @@ function TransfersTab({ products }) {
               {transfers.map(t => (
                 <tr key={t.id} onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
                   <td style={C.tdb()}>{t.product_name}</td>
-                  <td style={C.td()}>{t.from_shop || '—'}</td>
-                  <td style={C.td()}>{t.to_shop || '—'}</td>
-                  <td style={{ ...C.tdb(true), color: '#3b82f6' }}>{t.quantity}</td>
-                  <td style={{ ...C.td(), fontSize: 12 }}>{t.note || '—'}</td>
+                  <td style={C.td()}>{t.from_shop || '-'}</td>
+                  <td style={C.td()}>{t.to_shop || '-'}</td>
+                  <td style={{ ...C.tdb(true), color: '#00deab' }}>{t.quantity}</td>
+                  <td style={{ ...C.td(), fontSize: 12 }}>{t.note || '-'}</td>
                   <td style={{ ...C.td(), fontSize: 12 }}>{t.created_at?.slice(0,10)}</td>
                 </tr>
               ))}
@@ -270,10 +270,10 @@ function TransfersTab({ products }) {
       </div>
       <Modal open={open} onClose={() => { setOpen(false); setForm(emptyTransfer) }} title="New Stock Transfer">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <FormField label="Product *"><Select value={form.product_id} onChange={e => f('product_id', e.target.value)}><option value="">— Select Product —</option>{products.map(p => <option key={p.id} value={p.id}>{p.name} (Stock: {p.quantity})</option>)}</Select></FormField>
+          <FormField label="Product *"><Select value={form.product_id} onChange={e => f('product_id', e.target.value)}><option value="">- Select Product -</option>{products.map(p => <option key={p.id} value={p.id}>{p.name} (Stock: {p.quantity})</option>)}</Select></FormField>
           <div style={C.g2}>
-            <FormField label="From Shop *"><Select value={form.from_shop_id} onChange={e => f('from_shop_id', e.target.value)}><option value="">— Select Shop —</option>{shops.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></FormField>
-            <FormField label="To Shop *"><Select value={form.to_shop_id} onChange={e => f('to_shop_id', e.target.value)}><option value="">— Select Shop —</option>{shops.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></FormField>
+            <FormField label="From Shop *"><Select value={form.from_shop_id} onChange={e => f('from_shop_id', e.target.value)}><option value="">- Select Shop -</option>{shops.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></FormField>
+            <FormField label="To Shop *"><Select value={form.to_shop_id} onChange={e => f('to_shop_id', e.target.value)}><option value="">- Select Shop -</option>{shops.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></FormField>
             <FormField label="Quantity *"><Input type="number" min="1" value={form.quantity} onChange={e => f('quantity', e.target.value)} /></FormField>
             <FormField label="Note"><Input placeholder="Optional" value={form.note} onChange={e => f('note', e.target.value)} /></FormField>
           </div>
@@ -326,3 +326,5 @@ export default function Stock() {
     </div>
   )
 }
+
+

@@ -1,4 +1,4 @@
-const registerProductHandlers   = require('./product.handlers')
+﻿const registerProductHandlers   = require('./product.handlers')
 const registerInventoryHandlers = require('./inventory.handlers')
 const registerSalesHandlers     = require('./sales.handlers')
 const registerCustomerHandlers  = require('./customer.handlers')
@@ -17,3 +17,5 @@ function registerHandlers() {
 }
 
 module.exports = { registerHandlers }
+
+

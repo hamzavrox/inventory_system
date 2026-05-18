@@ -1,9 +1,9 @@
-const { contextBridge, ipcRenderer } = require('electron')
+﻿const { contextBridge, ipcRenderer } = require('electron')
 
 const invoke = (ch, ...a) => ipcRenderer.invoke(ch, ...a)
 
 contextBridge.exposeInMainWorld('api', {
-  // ── Products & Catalog ──────────────────────────────────
+  // â”€â”€ Products & Catalog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   products: {
     getAll:       ()        => invoke('products:getAll'),
     add:          (data)    => invoke('products:add', data),
@@ -27,7 +27,7 @@ contextBridge.exposeInMainWorld('api', {
     delete:  (id)           => invoke('categories:delete', id),
   },
 
-  // ── Inventory ───────────────────────────────────────────
+  // â”€â”€ Inventory â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   inventory: {
     adjustStock:    (data)  => invoke('inventory:adjustStock', data),
     getStockLog:    (pid)   => invoke('inventory:getStockLog', pid),
@@ -36,7 +36,7 @@ contextBridge.exposeInMainWorld('api', {
     getTransfers:   ()      => invoke('inventory:getTransfers'),
   },
 
-  // ── Sales ───────────────────────────────────────────────
+  // â”€â”€ Sales â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sales: {
     create:   (data)        => invoke('sales:create', data),
     getAll:   (opts)        => invoke('sales:getAll', opts),
@@ -44,7 +44,7 @@ contextBridge.exposeInMainWorld('api', {
     return:   (data)        => invoke('sales:return', data),
   },
 
-  // ── Customers ───────────────────────────────────────────
+  // â”€â”€ Customers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   customers: {
     getAll:             ()          => invoke('customers:getAll'),
     add:                (data)      => invoke('customers:add', data),
@@ -55,7 +55,7 @@ contextBridge.exposeInMainWorld('api', {
     addPayment:         (data)      => invoke('customers:addPayment', data),
   },
 
-  // ── Accounting ──────────────────────────────────────────
+  // â”€â”€ Accounting â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   accounting: {
     getTransactions:  (filters)   => invoke('accounting:getTransactions', filters),
     addTransaction:   (data)      => invoke('accounting:addTransaction', data),
@@ -63,7 +63,7 @@ contextBridge.exposeInMainWorld('api', {
     getCashFlow:      (filters)   => invoke('accounting:getCashFlow', filters),
   },
 
-  // ── Branches & Shops ────────────────────────────────────
+  // â”€â”€ Branches & Shops â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   branches: {
     getAll:  ()             => invoke('branches:getAll'),
     add:     (data)         => invoke('branches:add', data),
@@ -75,7 +75,7 @@ contextBridge.exposeInMainWorld('api', {
     delete:  (id)           => invoke('shops:delete', id),
   },
 
-  // ── Users & Roles ────────────────────────────────────────
+  // â”€â”€ Users & Roles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   users: {
     getAll:  ()             => invoke('users:getAll'),
     add:     (data)         => invoke('users:add', data),
@@ -90,13 +90,13 @@ contextBridge.exposeInMainWorld('api', {
     delete:  (id)           => invoke('roles:delete', id),
   },
 
-  // ── Activity Logs ────────────────────────────────────────
+  // â”€â”€ Activity Logs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   logs: {
     add:     (data)         => invoke('logs:add', data),
     getAll:  ()             => invoke('logs:getAll'),
   },
 
-  // ── Discounts ────────────────────────────────────────────
+  // â”€â”€ Discounts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   discounts: {
     getAll:    ()           => invoke('discounts:getAll'),
     add:       (data)       => invoke('discounts:add', data),
@@ -104,7 +104,7 @@ contextBridge.exposeInMainWorld('api', {
     delete:    (id)         => invoke('discounts:delete', id),
   },
 
-  // ── Reports ─────────────────────────────────────────────
+  // â”€â”€ Reports â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   reports: {
     sales:        (f)       => invoke('reports:sales', f),
     topProducts:  (f)       => invoke('reports:topProducts', f),
@@ -114,12 +114,12 @@ contextBridge.exposeInMainWorld('api', {
     branchSales:  (f)       => invoke('reports:branchSales', f),
   },
 
-  // ── Print ───────────────────────────────────────────────
+  // â”€â”€ Print â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   print: {
     html: (html) => invoke('print:html', html),
   },
 
-  // ── Sync ────────────────────────────────────────────────
+  // â”€â”€ Sync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sync: {
     run:         (url, token) => invoke('sync:run', url, token),
     pullAll:     (url, token) => invoke('sync:pullAll', url, token),
@@ -133,7 +133,7 @@ contextBridge.exposeInMainWorld('api', {
     load: ()    => invoke('autobackup:load'),
   },
 
-  // ── Backup ───────────────────────────────────────────────
+  // â”€â”€ Backup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   backup: {
     create:     ()          => invoke('backup:create'),
     getAll:     ()          => invoke('backup:getAll'),
@@ -141,7 +141,9 @@ contextBridge.exposeInMainWorld('api', {
     openFolder: ()          => invoke('backup:openFolder'),
   },
 
-  // ── Events ──────────────────────────────────────────────
+  // â”€â”€ Events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   on: (channel, cb) => ipcRenderer.on(channel, (_, ...args) => cb(...args)),
   off: (channel, cb) => ipcRenderer.removeListener(channel, cb),
 })
+
+

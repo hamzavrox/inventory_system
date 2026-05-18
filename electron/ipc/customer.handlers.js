@@ -1,4 +1,4 @@
-const { ipcMain } = require('electron')
+﻿const { ipcMain } = require('electron')
 const { getDB } = require('../db/database')
 const { v4: uuid } = require('uuid')
 const { enqueue, dequeue } = require('./syncHelper')
@@ -58,3 +58,5 @@ module.exports = function registerCustomerHandlers() {
     return { id, success: true }
   })
 }
+
+

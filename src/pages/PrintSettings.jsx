@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Printer, Eye, Save } from 'lucide-react'
 import { FormField, Input, Select, Btn } from '../components/FormField'
 import { C } from '../utils/pageStyles'
@@ -25,7 +25,7 @@ export default function PrintSettings() {
   const Toggle = ({ k, label }) => (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0' }}>
       <span style={{ fontSize: 13, color: '#475569' }}>{label}</span>
-      <div onClick={() => f(k, !cfg[k])} style={{ width: 40, height: 22, borderRadius: 99, background: cfg[k] ? '#4f46e5' : '#e2e8f0', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}>
+      <div onClick={() => f(k, !cfg[k])} style={{ width: 40, height: 22, borderRadius: 99, background: cfg[k] ? '#00deab' : '#e2e8f0', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}>
         <div style={{ position: 'absolute', top: 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transition: 'transform 0.2s', transform: cfg[k] ? 'translateX(21px)' : 'translateX(3px)' }} />
       </div>
     </div>
@@ -41,7 +41,7 @@ export default function PrintSettings() {
         <div style={{ display: 'flex', gap: 8 }}>
           <button style={C.btn2} onClick={() => setPreview(s => !s)}><Eye size={14} /> {preview ? 'Hide' : 'Preview'}</button>
           <button style={C.btn2} onClick={handleTestPrint}><Printer size={14} /> Test Print</button>
-          <button style={C.btn} onClick={handleSave}><Save size={14} /> {saved ? 'Saved ✓' : 'Save Settings'}</button>
+          <button style={C.btn} onClick={handleSave}><Save size={14} /> {saved ? 'Saved ✔' : 'Save Settings'}</button>
         </div>
       </div>
 
@@ -112,3 +112,5 @@ export default function PrintSettings() {
     </div>
   )
 }
+
+

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Plus, Store, GitBranch, Trash2 } from 'lucide-react'
 import Modal from '../components/Modal'
 import { FormField, Input, Select, Btn } from '../components/FormField'
@@ -69,7 +69,7 @@ export default function Shops() {
           <FormField label="Shop Name *"><Input placeholder="e.g. Store #1" value={form.name} onChange={e => f('name', e.target.value)} autoFocus /></FormField>
           <FormField label="Branch">
             <Select value={form.branch_id} onChange={e => f('branch_id', e.target.value)}>
-              <option value="">— Select Branch —</option>
+              <option value="">- Select Branch -</option>
               {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </Select>
           </FormField>
@@ -82,3 +82,5 @@ export default function Shops() {
     </div>
   )
 }
+
+

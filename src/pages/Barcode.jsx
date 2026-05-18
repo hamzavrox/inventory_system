@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import JsBarcode from 'jsbarcode'
 import QRCode from 'qrcode'
 import { Search, Printer, Download, RefreshCw } from 'lucide-react'
@@ -86,14 +86,14 @@ export default function Barcode() {
     display: 'flex', alignItems: 'center', gap: 6,
     padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 500,
     cursor: 'pointer', border: 'none',
-    background: variant === 'primary' ? '#4f46e5' : variant === 'secondary' ? '#f1f5f9' : '#f8fafc',
+    background: variant === 'primary' ? '#00deab' : variant === 'secondary' ? '#f1f5f9' : '#f8fafc',
     color: variant === 'primary' ? '#fff' : '#475569',
   })
 
   return (
     <div style={{ padding: '20px 24px', display: 'flex', gap: 20, flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
 
-      {/* Left — Product Picker */}
+      {/* Left - Product Picker */}
       <div style={{ width: 240, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', margin: 0 }}>Barcode Generator</h2>
 
@@ -101,7 +101,7 @@ export default function Barcode() {
         <div style={{ position: 'relative' }}>
           <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
           <input
-            placeholder="Search products…"
+            placeholder="Search products..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{ ...inputStyle, paddingLeft: 30 }}
@@ -118,10 +118,10 @@ export default function Barcode() {
             <button key={p.id} onClick={() => { setSelected(p); setCustom('') }}
               style={{
                 width: '100%', textAlign: 'left', padding: '10px 14px',
-                borderBottom: '1px solid #f1f5f9', background: selected?.id === p.id ? '#eef2ff' : 'transparent',
-                borderLeft: selected?.id === p.id ? '3px solid #4f46e5' : '3px solid transparent',
+                borderBottom: '1px solid #f1f5f9', background: selected?.id === p.id ? '#ecfdf5' : 'transparent',
+                borderLeft: selected?.id === p.id ? '3px solid #00deab' : '3px solid transparent',
                 cursor: 'pointer', border: 'none', borderBottom: '1px solid #f1f5f9',
-                borderLeft: selected?.id === p.id ? '3px solid #4f46e5' : '3px solid transparent',
+                borderLeft: selected?.id === p.id ? '3px solid #00deab' : '3px solid transparent',
               }}
             >
               <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</p>
@@ -134,7 +134,7 @@ export default function Barcode() {
         </div>
       </div>
 
-      {/* Right — Generator */}
+      {/* Right - Generator */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14, minHeight: 0, overflow: 'hidden' }}>
 
         {/* Controls card */}
@@ -161,7 +161,7 @@ export default function Barcode() {
             )}
             <div>
               <p style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 5px' }}>Custom Value</p>
-              <input placeholder="Override value…" value={custom} onChange={e => setCustom(e.target.value)} style={inputStyle} />
+              <input placeholder="Override value..." value={custom} onChange={e => setCustom(e.target.value)} style={inputStyle} />
             </div>
             <div>
               <p style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 5px' }}>Print Copies</p>
@@ -207,7 +207,7 @@ export default function Barcode() {
                 boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
               }}>
                 {label.showName  && selected && <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#334155' }}>{selected.name}</p>}
-                {label.showPrice && selected && <p style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#4f46e5' }}>${selected.price?.toFixed(2)}</p>}
+                {label.showPrice && selected && <p style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#00deab' }}>${selected.price?.toFixed(2)}</p>}
                 {mode === 'barcode' ? <svg ref={barcodeRef} /> : <canvas ref={qrRef} />}
                 {label.showSku && <p style={{ margin: 0, fontSize: 11, color: '#94a3b8', fontFamily: 'monospace' }}>{value}</p>}
               </div>
@@ -231,3 +231,5 @@ export default function Barcode() {
     </div>
   )
 }
+
+

@@ -1,10 +1,10 @@
-const { ipcMain } = require('electron')
+﻿const { ipcMain } = require('electron')
 const { getDB } = require('../db/database')
 const { v4: uuid } = require('uuid')
 const { enqueue, dequeue } = require('./syncHelper')
 
 module.exports = function registerProductHandlers() {
-  // ── Brands ──────────────────────────────────────────────
+  // â”€â”€ Brands â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('brands:getAll', () =>
     getDB().prepare(`SELECT * FROM brands ORDER BY name`).all()
   )
@@ -24,7 +24,7 @@ module.exports = function registerProductHandlers() {
     return { success: true }
   })
 
-  // ── Categories ──────────────────────────────────────────
+  // â”€â”€ Categories â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('categories:getAll', () =>
     getDB().prepare(`SELECT * FROM categories ORDER BY name`).all()
   )
@@ -44,7 +44,7 @@ module.exports = function registerProductHandlers() {
     return { success: true }
   })
 
-  // ── Products ────────────────────────────────────────────
+  // â”€â”€ Products â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('products:getAll', () =>
     getDB().prepare(`
       SELECT p.*, c.name AS category_name, b.name AS brand_name
@@ -99,7 +99,7 @@ module.exports = function registerProductHandlers() {
     `).all()
   )
 
-  // ── Variants ────────────────────────────────────────────
+  // â”€â”€ Variants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('variants:getByProduct', (_, productId) =>
     getDB().prepare(`SELECT * FROM product_variants WHERE product_id = ?`).all(productId)
   )
@@ -123,3 +123,5 @@ module.exports = function registerProductHandlers() {
     return { success: true }
   })
 }
+
+

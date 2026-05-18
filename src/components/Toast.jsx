@@ -1,15 +1,15 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { CheckCircle, XCircle, Info, X } from 'lucide-react'
 
 const ICONS = {
   success: <CheckCircle size={15} color="#059669" />,
   error:   <XCircle    size={15} color="#dc2626" />,
-  info:    <Info       size={15} color="#4f46e5" />,
+  info:    <Info       size={15} color="#00deab" />,
 }
 const COLORS = {
   success: { bg: '#ecfdf5', border: '#bbf7d0', color: '#047857' },
   error:   { bg: '#fef2f2', border: '#fecaca', color: '#dc2626' },
-  info:    { bg: '#eef2ff', border: '#c7d2fe', color: '#4338ca' },
+  info:    { bg: '#ecfdf5', border: '#c7d2fe', color: '#4338ca' },
 }
 
 export default function Toast({ message, type = 'success', onClose, duration = 3000 }) {
@@ -42,3 +42,5 @@ export default function Toast({ message, type = 'success', onClose, duration = 3
     </div>
   )
 }
+
+

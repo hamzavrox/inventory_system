@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, Search, Layers, AlertTriangle, X, Check, ChevronDown, ChevronRight } from 'lucide-react'
 import Modal from '../components/Modal'
 import { FormField, Input, Select, Btn } from '../components/FormField'
@@ -124,7 +124,7 @@ export default function Products() {
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <div style={C.searchWrap}>
           <span style={C.searchIcon}><Search size={14} /></span>
-          <input style={C.searchInput} placeholder="Search by name or SKU…" value={search} onChange={e => setSearch(e.target.value)} />
+          <input style={C.searchInput} placeholder="Search by name or SKU..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select style={{ ...C.select, width: 180 }} value={filterCat} onChange={e => setFilterCat(e.target.value)}>
           <option value="">All Categories</option>
@@ -158,9 +158,9 @@ export default function Products() {
                       {p.name}
                       {p.quantity <= p.low_stock_threshold && <AlertTriangle size={11} style={{ display: 'inline', marginLeft: 5, color: '#f59e0b', verticalAlign: 'middle' }} />}
                     </td>
-                    <td style={{ ...C.td(), fontFamily: 'monospace', fontSize: 11, color: '#94a3b8' }}>{p.sku || '—'}</td>
-                    <td style={{ ...C.td(), fontSize: 12 }}>{p.category_name || '—'}</td>
-                    <td style={{ ...C.td(), fontSize: 12 }}>{p.brand_name || '—'}</td>
+                    <td style={{ ...C.td(), fontFamily: 'monospace', fontSize: 11, color: '#94a3b8' }}>{p.sku || '-'}</td>
+                    <td style={{ ...C.td(), fontSize: 12 }}>{p.category_name || '-'}</td>
+                    <td style={{ ...C.td(), fontSize: 12 }}>{p.brand_name || '-'}</td>
                     <td style={C.td(true)}>${fmt(p.cost_price)}</td>
                     <td style={C.tdb(true)}>${fmt(p.price)}</td>
                     <td style={{ ...C.tdb(true), color: p.quantity <= p.low_stock_threshold ? '#ef4444' : '#059669' }}>
@@ -169,7 +169,7 @@ export default function Products() {
                     <td style={{ ...C.td(), textAlign: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                         <button style={C.iBtn} onClick={() => openVariants(p)} title="Variants"><Layers size={14} color="#94a3b8" /></button>
-                        {can('products','edit')   && <button style={C.iBtn} onClick={() => handleEdit(p)}><Pencil size={14} color="#6366f1" /></button>}
+                        {can('products','edit')   && <button style={C.iBtn} onClick={() => handleEdit(p)}><Pencil size={14} color="#00deab" /></button>}
                         {can('products','delete') && <button style={C.iBtn} onClick={() => handleDelete(p.id)}><Trash2 size={14} color="#ef4444" /></button>}
                       </div>
                     </td>
@@ -180,12 +180,12 @@ export default function Products() {
                       : expanded[p.id].map(v => (
                         <tr key={v.id} style={{ background: '#f8fafc' }}>
                           <td style={{ ...C.td(), width: 32 }} />
-                          <td style={{ ...C.td(), paddingLeft: 32, fontSize: 12, color: '#475569' }}>↳ {v.name}</td>
-                          <td style={{ ...C.td(), fontFamily: 'monospace', fontSize: 11, color: '#94a3b8' }}>{v.sku || '—'}</td>
+                          <td style={{ ...C.td(), paddingLeft: 32, fontSize: 12, color: '#475569' }}>â†³ {v.name}</td>
+                          <td style={{ ...C.td(), fontFamily: 'monospace', fontSize: 11, color: '#94a3b8' }}>{v.sku || '-'}</td>
                           <td style={C.td()} />
                           <td style={C.td()} />
                           <td style={C.td(true)} />
-                          <td style={{ ...C.tdb(true), color: '#4f46e5' }}>${fmt(v.price)}</td>
+                          <td style={{ ...C.tdb(true), color: '#00deab' }}>${fmt(v.price)}</td>
                           <td style={{ ...C.tdb(true), color: v.quantity <= 0 ? '#ef4444' : '#059669' }}>{v.quantity}</td>
                           <td style={C.td()} />
                         </tr>
@@ -211,13 +211,13 @@ export default function Products() {
           <FormField label="Barcode"><Input placeholder="1234567890" value={form.barcode} onChange={e => f('barcode', e.target.value)} /></FormField>
           <FormField label="Category">
             <Select value={form.category_id} onChange={e => f('category_id', e.target.value)}>
-              <option value="">— Select —</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.parent_id ? `  ↳ ${c.name}` : c.name}</option>)}
+              <option value="">- Select -</option>
+              {categories.map(c => <option key={c.id} value={c.id}>{c.parent_id ? `  â†³ ${c.name}` : c.name}</option>)}
             </Select>
           </FormField>
           <FormField label="Brand">
             <Select value={form.brand_id} onChange={e => f('brand_id', e.target.value)}>
-              <option value="">— Select —</option>
+              <option value="">- Select -</option>
               {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </Select>
           </FormField>
@@ -238,21 +238,21 @@ export default function Products() {
         )}
         <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
           <Btn onClick={handleSubmit} disabled={saving}>
-            <Check size={14} /> {saving ? 'Saving…' : editId ? 'Update' : 'Save Product'}
+            <Check size={14} /> {saving ? 'Saving...' : editId ? 'Update' : 'Save Product'}
           </Btn>
           <Btn variant="secondary" onClick={() => { setShowForm(false); setEditId(null); setForm(emptyForm); setFormError('') }}><X size={14} /> Cancel</Btn>
         </div>
       </Modal>
 
       {/* Variants Modal */}
-      <Modal open={!!varModal} onClose={() => { setVarModal(null); setVariants([]); setVarForm(emptyVariant) }} title={`Variants — ${varModal?.name}`} width="max-w-xl">
+      <Modal open={!!varModal} onClose={() => { setVarModal(null); setVariants([]); setVarForm(emptyVariant) }} title={`Variants - ${varModal?.name}`} width="max-w-xl">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
           {!variants.length && <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: 13, padding: '12px 0' }}>No variants yet.</p>}
           {variants.map(v => (
             <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f8fafc', borderRadius: 8, padding: '8px 12px' }}>
               <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: '#334155' }}>{v.name}</span>
-              <span style={{ fontSize: 11, color: '#94a3b8', fontFamily: 'monospace' }}>{v.sku || '—'}</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: '#4f46e5' }}>${fmt(v.price)}</span>
+              <span style={{ fontSize: 11, color: '#94a3b8', fontFamily: 'monospace' }}>{v.sku || '-'}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#00deab' }}>${fmt(v.price)}</span>
               <span style={{ fontSize: 13, fontWeight: 600, color: v.quantity <= 0 ? '#ef4444' : '#059669' }}>{v.quantity}</span>
               <button style={C.iBtn} onClick={() => handleDeleteVariant(v.id)}><Trash2 size={13} color="#ef4444" /></button>
             </div>
@@ -273,3 +273,5 @@ export default function Products() {
     </div>
   )
 }
+
+

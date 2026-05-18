@@ -1,10 +1,10 @@
-const SCHEMA_VERSION = 1
+﻿const SCHEMA_VERSION = 1
 
 const schema = `
-  -- ─── CORE ────────────────────────────────────────────────
+  -- â”€â”€â”€ CORE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   CREATE TABLE IF NOT EXISTS schema_version (version INTEGER);
 
-  -- ─── BRANDS & CATEGORIES ─────────────────────────────────
+  -- â”€â”€â”€ BRANDS & CATEGORIES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   CREATE TABLE IF NOT EXISTS brands (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -18,7 +18,7 @@ const schema = `
     created_at TEXT DEFAULT (datetime('now'))
   );
 
-  -- ─── PRODUCTS ────────────────────────────────────────────
+  -- â”€â”€â”€ PRODUCTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   CREATE TABLE IF NOT EXISTS products (
     id          TEXT PRIMARY KEY,
     name        TEXT NOT NULL,
@@ -46,7 +46,7 @@ const schema = `
     created_at TEXT DEFAULT (datetime('now'))
   );
 
-  -- ─── INVENTORY ───────────────────────────────────────────
+  -- â”€â”€â”€ INVENTORY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   CREATE TABLE IF NOT EXISTS stock_log (
     id         TEXT PRIMARY KEY,
     product_id TEXT NOT NULL,
@@ -60,7 +60,7 @@ const schema = `
     synced     INTEGER DEFAULT 0
   );
 
-  -- ─── CUSTOMERS ───────────────────────────────────────────
+  -- â”€â”€â”€ CUSTOMERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   CREATE TABLE IF NOT EXISTS customers (
     id         TEXT PRIMARY KEY,
     name       TEXT NOT NULL,
@@ -83,7 +83,7 @@ const schema = `
     created_at  TEXT DEFAULT (datetime('now'))
   );
 
-  -- ─── SALES ───────────────────────────────────────────────
+  -- â”€â”€â”€ SALES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   CREATE TABLE IF NOT EXISTS sales (
     id           TEXT PRIMARY KEY,
     invoice_no   TEXT UNIQUE,
@@ -122,7 +122,7 @@ const schema = `
     created_at TEXT DEFAULT (datetime('now'))
   );
 
-  -- ─── ACCOUNTING ──────────────────────────────────────────
+  -- â”€â”€â”€ ACCOUNTING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   CREATE TABLE IF NOT EXISTS transactions (
     id         TEXT PRIMARY KEY,
     type       TEXT NOT NULL,             -- 'income' | 'expense'
@@ -135,7 +135,7 @@ const schema = `
     synced     INTEGER DEFAULT 0
   );
 
-  -- ─── DISCOUNTS & COUPONS ─────────────────────────────────
+  -- â”€â”€â”€ DISCOUNTS & COUPONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   CREATE TABLE IF NOT EXISTS discounts (
     id         TEXT PRIMARY KEY,
     code       TEXT UNIQUE,
@@ -147,7 +147,7 @@ const schema = `
     created_at TEXT DEFAULT (datetime('now'))
   );
 
-  -- ─── BRANCHES & SHOPS ────────────────────────────────────
+  -- â”€â”€â”€ BRANCHES & SHOPS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   CREATE TABLE IF NOT EXISTS branches (
     id         TEXT PRIMARY KEY,
     name       TEXT NOT NULL,
@@ -173,7 +173,7 @@ const schema = `
     created_at   TEXT DEFAULT (datetime('now'))
   );
 
-  -- ─── USERS & ROLES ───────────────────────────────────────
+  -- â”€â”€â”€ USERS & ROLES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   CREATE TABLE IF NOT EXISTS users (
     id         TEXT PRIMARY KEY,
     name       TEXT NOT NULL,
@@ -200,7 +200,7 @@ const schema = `
     created_at TEXT DEFAULT (datetime('now'))
   );
 
-  -- ─── SYNC QUEUE ──────────────────────────────────────────
+  -- â”€â”€â”€ SYNC QUEUE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   CREATE TABLE IF NOT EXISTS sync_queue (
     id         TEXT PRIMARY KEY,
     table_name TEXT NOT NULL,
@@ -213,7 +213,7 @@ const schema = `
     synced_at  TEXT
   );
 
-  -- ─── BACKUPS ─────────────────────────────────────────────
+  -- â”€â”€â”€ BACKUPS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   CREATE TABLE IF NOT EXISTS backups (
     id         TEXT PRIMARY KEY,
     path       TEXT,
@@ -224,3 +224,5 @@ const schema = `
 `
 
 module.exports = { schema, SCHEMA_VERSION }
+
+

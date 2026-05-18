@@ -1,4 +1,4 @@
-const { ipcMain } = require('electron')
+﻿const { ipcMain } = require('electron')
 const { getDB } = require('../db/database')
 
 module.exports = function registerReportHandlers() {
@@ -102,3 +102,5 @@ module.exports = function registerReportHandlers() {
     `).all(...params)
   })
 }
+
+

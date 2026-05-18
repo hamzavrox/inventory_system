@@ -1,4 +1,4 @@
-const { ipcMain, app, dialog, BrowserWindow } = require('electron')
+﻿const { ipcMain, app, dialog, BrowserWindow } = require('electron')
 const { getDB, reloadDB } = require('../db/database')
 const { v4: uuid } = require('uuid')
 const path = require('path')
@@ -8,7 +8,7 @@ module.exports = function registerAdminHandlers() {
 
   const { enqueue, dequeue } = require('./syncHelper')
 
-  // ── Branches ────────────────────────────────────────────
+  // â”€â”€ Branches â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('branches:getAll', () =>
     getDB().prepare(`SELECT * FROM branches ORDER BY name`).all()
   )
@@ -29,7 +29,7 @@ module.exports = function registerAdminHandlers() {
     return { success: true }
   })
 
-  // ── Shops ───────────────────────────────────────────────
+  // â”€â”€ Shops â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('shops:getAll', () =>
     getDB().prepare(`
       SELECT s.*, b.name AS branch_name FROM shops s
@@ -53,7 +53,7 @@ module.exports = function registerAdminHandlers() {
     return { success: true }
   })
 
-  // ── Users ───────────────────────────────────────────────
+  // â”€â”€ Users â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('users:getAll', () =>
     getDB().prepare(`
       SELECT u.id, u.name, u.username, u.active, r.name AS role_name, b.name AS branch_name
@@ -95,7 +95,7 @@ module.exports = function registerAdminHandlers() {
     return user || null
   })
 
-  // ── Roles ───────────────────────────────────────────────
+  // â”€â”€ Roles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('roles:getAll', () =>
     getDB().prepare(`SELECT * FROM roles`).all()
   )
@@ -123,7 +123,7 @@ module.exports = function registerAdminHandlers() {
     return { success: true }
   })
 
-  // ── Activity Logs ────────────────────────────────────────
+  // â”€â”€ Activity Logs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('logs:add', (_, { user_id, action, module, detail }) => {
     getDB().prepare(`INSERT INTO activity_logs (id, user_id, action, module, detail) VALUES (?, ?, ?, ?, ?)`)
       .run(uuid(), user_id || null, action, module || null, detail || null)
@@ -137,7 +137,7 @@ module.exports = function registerAdminHandlers() {
     `).all()
   )
 
-  // ── Discounts ────────────────────────────────────────────
+  // â”€â”€ Discounts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('discounts:getAll', () =>
     getDB().prepare(`SELECT * FROM discounts ORDER BY created_at DESC`).all()
   )
@@ -172,7 +172,7 @@ module.exports = function registerAdminHandlers() {
     return { success: true }
   })
 
-  // ── Backup ───────────────────────────────────────────────
+  // â”€â”€ Backup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const CLOUD_DIRS = [
     { p: path.join(require('os').homedir(), 'My Drive', 'FloriManager Backups'),              type: 'google_drive' },
     { p: path.join(require('os').homedir(), 'OneDrive', 'FloriManager Backups'),              type: 'onedrive'     },
@@ -270,7 +270,7 @@ module.exports = function registerAdminHandlers() {
       // 3. Copy backup file over current DB
       fs.copyFileSync(filePaths[0], destPath)
 
-      // 4. Relaunch app — cleanest way to reload restored DB
+      // 4. Relaunch app â€” cleanest way to reload restored DB
       setTimeout(() => { app.relaunch(); app.exit(0) }, 500)
 
       return { success: true }
@@ -287,7 +287,7 @@ module.exports = function registerAdminHandlers() {
     return { success: true }
   })
 
-  // ── Cleanup deleted records ─────────────────────────────────
+  // â”€â”€ Cleanup deleted records â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('db:cleanup', () => {
     const db = getDB()
     const p = db.prepare(`DELETE FROM products WHERE deleted_at IS NOT NULL`).run()
@@ -295,7 +295,7 @@ module.exports = function registerAdminHandlers() {
     return { products: p.changes, customers: c.changes }
   })
 
-  // ── Full Sync ────────────────────────────────────────────
+  // â”€â”€ Full Sync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('sync:fullSync', () => {
     const db = getDB()
     const tables = [
@@ -336,3 +336,5 @@ module.exports = function registerAdminHandlers() {
     return { total }
   })
 }
+
+

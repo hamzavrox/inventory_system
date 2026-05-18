@@ -1,4 +1,4 @@
-// electron/sync/syncEngine.js
+﻿// electron/sync/syncEngine.js
 const { getDB } = require('../db/database')
 
 async function runSync(apiUrl, authToken) {
@@ -33,3 +33,5 @@ async function runSync(apiUrl, authToken) {
 }
 
 module.exports = { runSync }
+
+

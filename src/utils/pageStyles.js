@@ -1,4 +1,4 @@
-export const fmt = (n) => Number(n || 0).toFixed(2)
+﻿export const fmt = (n) => Number(n || 0).toFixed(2)
 
 export const C = {
   // Layout
@@ -34,14 +34,15 @@ export const C = {
   select: { width: '100%', boxSizing: 'border-box', border: '1px solid #e2e8f0', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#1e293b', outline: 'none', background: '#fff' },
 
   // Buttons
-  btn: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, background: '#4f46e5', color: '#fff', whiteSpace: 'nowrap' },
+  btn: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, background: '#00deab', color: '#fff', whiteSpace: 'nowrap' },
   btn2: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', fontSize: 13, fontWeight: 500, background: '#f8fafc', color: '#475569', whiteSpace: 'nowrap' },
   btnD: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, border: '1px solid #fecaca', cursor: 'pointer', fontSize: 13, fontWeight: 500, background: '#fef2f2', color: '#dc2626', whiteSpace: 'nowrap' },
   iBtn: { background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
 
   // Tabs
   tabBar: { display: 'flex', borderBottom: '2px solid #f1f5f9', gap: 0 },
-  tab: (active) => ({ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', fontSize: 13, fontWeight: 500, border: 'none', borderBottom: active ? '2px solid #4f46e5' : '2px solid transparent', marginBottom: -2, background: 'none', cursor: 'pointer', color: active ? '#4f46e5' : '#64748b', whiteSpace: 'nowrap' }),
+  tab: (active) => ({ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', fontSize: 13, fontWeight: 500, border: 'none', borderBottom: active ? '2px solid #00deab' : '2px solid transparent', marginBottom: -2, background: 'none', cursor: 'pointer', color: active ? '#00deab' : '#64748b', whiteSpace: 'nowrap' }),
+
 
   // Search
   searchWrap: { position: 'relative', flex: 1, minWidth: 200 },
@@ -51,3 +52,5 @@ export const C = {
   // Divider
   divider: { borderTop: '1px solid #f1f5f9', margin: '4px 0' },
 }
+
+

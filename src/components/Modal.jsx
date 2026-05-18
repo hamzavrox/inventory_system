@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 
@@ -53,3 +53,5 @@ export default function Modal({ open, onClose, title, children, width = 'max-w-l
     </AnimatePresence>
   )
 }
+
+

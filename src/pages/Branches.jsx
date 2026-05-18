@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Plus, Trash2, GitBranch, MapPin, Phone, BarChart2 } from 'lucide-react'
 import Modal from '../components/Modal'
 import { FormField, Input, Btn } from '../components/FormField'
@@ -54,8 +54,8 @@ export default function Branches() {
                 <button style={{ ...C.iBtn, position: 'absolute', top: 12, right: 12 }} onClick={() => handleDelete(b.id)}><Trash2 size={13} color="#ef4444" /></button>
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-                <div style={{ width: 42, height: 42, borderRadius: 10, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <GitBranch size={18} color="#4f46e5" />
+                <div style={{ width: 42, height: 42, borderRadius: 10, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <GitBranch size={18} color="#00deab" />
                 </div>
                 <div>
                   <p style={{ fontSize: 14, fontWeight: 600, color: '#1e293b', margin: 0 }}>{b.name}</p>
@@ -65,7 +65,7 @@ export default function Branches() {
               {b.address && <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 6 }}><MapPin size={12} color="#94a3b8" style={{ marginTop: 1, flexShrink: 0 }} /><span style={{ fontSize: 12, color: '#64748b' }}>{b.address}</span></div>}
               {b.phone   && <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}><Phone size={12} color="#94a3b8" /><span style={{ fontSize: 12, color: '#64748b' }}>{b.phone}</span></div>}
               <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 12, marginTop: 8, display: 'flex', gap: 20 }}>
-                <div><p style={{ fontSize: 11, color: '#94a3b8', margin: 0 }}>Sales</p><p style={{ fontSize: 15, fontWeight: 700, color: '#4f46e5', margin: '2px 0 0' }}>{stats?.sales_count ?? 0}</p></div>
+                <div><p style={{ fontSize: 11, color: '#94a3b8', margin: 0 }}>Sales</p><p style={{ fontSize: 15, fontWeight: 700, color: '#00deab', margin: '2px 0 0' }}>{stats?.sales_count ?? 0}</p></div>
                 <div><p style={{ fontSize: 11, color: '#94a3b8', margin: 0 }}>Revenue</p><p style={{ fontSize: 15, fontWeight: 700, color: '#059669', margin: '2px 0 0' }}>${fmt(stats?.revenue)}</p></div>
               </div>
             </div>
@@ -89,3 +89,5 @@ export default function Branches() {
     </div>
   )
 }
+
+

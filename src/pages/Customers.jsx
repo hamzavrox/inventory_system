@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, Search, BookOpen, History, DollarSign, X, Check, User } from 'lucide-react'
 import Modal from '../components/Modal'
 import { FormField, Input, Btn } from '../components/FormField'
@@ -42,8 +42,8 @@ function LedgerDrawer({ customer, onClose }) {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: '1px solid #f1f5f9' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <User size={16} color="#4f46e5" />
+          <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <User size={16} color="#00deab" />
           </div>
           <div>
             <p style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', margin: 0 }}>{customer.name}</p>
@@ -56,7 +56,7 @@ function LedgerDrawer({ customer, onClose }) {
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid #f1f5f9' }}>
         {[['ledger','Ledger',BookOpen],['history','Purchases',History]].map(([k,l,Icon]) => (
-          <button key={k} onClick={() => setTab(k)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '10px 0', fontSize: 12, fontWeight: 500, border: 'none', borderBottom: tab === k ? '2px solid #4f46e5' : '2px solid transparent', marginBottom: -1, background: 'none', cursor: 'pointer', color: tab === k ? '#4f46e5' : '#64748b' }}>
+          <button key={k} onClick={() => setTab(k)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '10px 0', fontSize: 12, fontWeight: 500, border: 'none', borderBottom: tab === k ? '2px solid #00deab' : '2px solid transparent', marginBottom: -1, background: 'none', cursor: 'pointer', color: tab === k ? '#00deab' : '#64748b' }}>
             <Icon size={13} />{l}
           </button>
         ))}
@@ -76,10 +76,10 @@ function LedgerDrawer({ customer, onClose }) {
             </div>
             {ledger.map(l => (
               <div key={l.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderBottom: '1px solid #f8fafc' }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.type === 'payment' ? '#059669' : l.type === 'refund' ? '#3b82f6' : '#ef4444', flexShrink: 0 }} />
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.type === 'payment' ? '#059669' : l.type === 'refund' ? '#00deab' : '#ef4444', flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 12, fontWeight: 500, color: '#334155', margin: 0, textTransform: 'capitalize' }}>{l.type}</p>
-                  <p style={{ fontSize: 11, color: '#94a3b8', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.note || l.ref_id || '—'}</p>
+                  <p style={{ fontSize: 11, color: '#94a3b8', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.note || l.ref_id || '-'}</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: l.type === 'payment' || l.type === 'refund' ? '#059669' : '#ef4444' }}>
@@ -97,10 +97,10 @@ function LedgerDrawer({ customer, onClose }) {
             {history.map(s => (
               <div key={s.id} style={{ padding: '10px 16px', borderBottom: '1px solid #f8fafc' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 12, fontFamily: 'monospace', fontWeight: 600, color: '#4f46e5' }}>{s.invoice_no}</span>
+                  <span style={{ fontSize: 12, fontFamily: 'monospace', fontWeight: 600, color: '#00deab' }}>{s.invoice_no}</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>${fmt(s.total)}</span>
                 </div>
-                <p style={{ fontSize: 11, color: '#94a3b8', margin: '3px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.items_summary || '—'}</p>
+                <p style={{ fontSize: 11, color: '#94a3b8', margin: '3px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.items_summary || '-'}</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
                   <span style={C.badge(s.status === 'completed' ? '#ecfdf5' : '#fef2f2', s.status === 'completed' ? '#059669' : '#dc2626')}>{s.status}</span>
                   <span style={{ fontSize: 11, color: '#94a3b8' }}>{s.created_at?.slice(0,10)}</span>
@@ -173,7 +173,7 @@ export default function Customers() {
       {/* Summary cards */}
       <div style={{ ...C.g3, flexShrink: 0 }}>
         {[
-          { label: 'Total Customers', value: customers.length,       color: '#4f46e5' },
+          { label: 'Total Customers', value: customers.length,       color: '#00deab' },
           { label: 'Total Owed',      value: `$${fmt(totalOwed)}`,   color: '#dc2626' },
           { label: 'Total Credit',    value: `$${fmt(totalCredit)}`, color: '#059669' },
         ].map(({ label, value, color }) => (
@@ -189,7 +189,7 @@ export default function Customers() {
         <div style={{ padding: '10px 14px', borderBottom: '1px solid #f1f5f9', flexShrink: 0 }}>
           <div style={C.searchWrap}>
             <span style={C.searchIcon}><Search size={14} /></span>
-            <input style={{ ...C.searchInput, border: 'none', outline: 'none', boxShadow: 'none' }} placeholder="Search by name, phone, or email…" value={search} onChange={e => setSearch(e.target.value)} />
+            <input style={{ ...C.searchInput, border: 'none', outline: 'none', boxShadow: 'none' }} placeholder="Search by name, phone, or email..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
         <div style={{ overflowX: 'auto', overflowY: 'auto', flex: 1 }}>
@@ -208,18 +208,18 @@ export default function Customers() {
                   onMouseLeave={e => e.currentTarget.style.background = '#fff'}
                 >
                   <td style={C.td()}>
-                    <button onClick={() => setDrawer(c)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#4f46e5', padding: 0 }}>
+                    <button onClick={() => setDrawer(c)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#00deab', padding: 0 }}>
                       {c.name}
                     </button>
                   </td>
-                  <td style={C.td()}>{c.phone || '—'}</td>
-                  <td style={{ ...C.td(), fontSize: 12 }}>{c.email || '—'}</td>
+                  <td style={C.td()}>{c.phone || '-'}</td>
+                  <td style={{ ...C.td(), fontSize: 12 }}>{c.email || '-'}</td>
                   <td style={C.td(true)}>${fmt(c.credit_limit)}</td>
                   <td style={{ ...C.td(), textAlign: 'center' }}><BalanceBadge balance={c.balance} /></td>
                   <td style={{ ...C.td(), textAlign: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                       <button style={C.iBtn} onClick={() => setDrawer(c)} title="Ledger"><BookOpen size={14} color="#94a3b8" /></button>
-                      {can('customers','edit')   && <button style={C.iBtn} onClick={() => handleEdit(c)}><Pencil size={14} color="#6366f1" /></button>}
+                      {can('customers','edit')   && <button style={C.iBtn} onClick={() => handleEdit(c)}><Pencil size={14} color="#00deab" /></button>}
                       {can('customers','delete') && <button style={C.iBtn} onClick={() => handleDelete(c.id)}><Trash2 size={14} color="#ef4444" /></button>}
                     </div>
                   </td>
@@ -263,3 +263,5 @@ export default function Customers() {
     </div>
   )
 }
+
+

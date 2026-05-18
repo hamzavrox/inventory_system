@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Plus, Pencil, Shield, UserCheck, UserX, ClipboardList, Check, Key, Trash2 } from 'lucide-react'
 import Modal from '../components/Modal'
 import { FormField, Input, Select, Btn } from '../components/FormField'
@@ -13,7 +13,7 @@ const emptyRole = { name: '', permissions: {} }
 
 function PermMatrix({ permissions, onChange }) {
   const perms = typeof permissions === 'string' ? (() => { try { return JSON.parse(permissions || '{}') } catch { return {} } })() : (permissions || {})
-  if (perms.all) return <p style={{ fontSize: 13, color: '#059669', fontWeight: 500, padding: '8px 0' }}>✓ Full Admin Access — all permissions granted</p>
+  if (perms.all) return <p style={{ fontSize: 13, color: '#059669', fontWeight: 500, padding: '8px 0' }}>✔ Full Admin Access - all permissions granted</p>
   const toggle = (mod, right) => { const cur = perms[mod]||[]; onChange({ ...perms, [mod]: cur.includes(right) ? cur.filter(r=>r!==right) : [...cur,right] }) }
   const allOn  = (mod) => onChange({ ...perms, [mod]: ['view','add','edit','delete'] })
   return (
@@ -34,11 +34,11 @@ function PermMatrix({ permissions, onChange }) {
                 <td style={{ ...C.td(), fontWeight: 500, color: '#334155', textTransform: 'capitalize', paddingRight: 16 }}>{mod}</td>
                 {['view','add','edit','delete'].map(right => (
                   <td key={right} style={{ ...C.td(), textAlign: 'center' }}>
-                    <input type="checkbox" checked={cur.includes(right)} onChange={() => toggle(mod, right)} style={{ accentColor: '#4f46e5' }} />
+                    <input type="checkbox" checked={cur.includes(right)} onChange={() => toggle(mod, right)} style={{ accentColor: '#00deab' }} />
                   </td>
                 ))}
                 <td style={{ ...C.td(), textAlign: 'center' }}>
-                  <button onClick={() => allOn(mod)} style={{ ...C.iBtn, fontSize: 11, color: '#4f46e5', fontWeight: 500 }}>All</button>
+                  <button onClick={() => allOn(mod)} style={{ ...C.iBtn, fontSize: 11, color: '#00deab', fontWeight: 500 }}>All</button>
                 </td>
               </tr>
             )
@@ -105,8 +105,8 @@ function UsersTab({ roles, branches, showToast }) {
                 <tr key={u.id} onMouseEnter={e => e.currentTarget.style.background='#f8fafc'} onMouseLeave={e => e.currentTarget.style.background='#fff'}>
                   <td style={C.tdb()}>{u.name}</td>
                   <td style={{ ...C.td(), fontFamily: 'monospace', fontSize: 12 }}>{u.username}</td>
-                  <td style={C.td()}>{u.role_name ? <span style={C.badge('#eef2ff','#4f46e5')}>{u.role_name}</span> : <span style={{ color: '#94a3b8', fontSize: 12 }}>—</span>}</td>
-                  <td style={{ ...C.td(), fontSize: 12 }}>{u.branch_name || '—'}</td>
+                  <td style={C.td()}>{u.role_name ? <span style={C.badge('#ecfdf5','#00deab')}>{u.role_name}</span> : <span style={{ color: '#94a3b8', fontSize: 12 }}>-</span>}</td>
+                  <td style={{ ...C.td(), fontSize: 12 }}>{u.branch_name || '-'}</td>
                   <td style={{ ...C.td(), textAlign: 'center' }}>
                     {u.active
                       ? <span style={{ ...C.badge('#ecfdf5','#059669'), display: 'inline-flex', alignItems: 'center', gap: 4 }}><UserCheck size={11} /> Active</span>
@@ -114,7 +114,7 @@ function UsersTab({ roles, branches, showToast }) {
                   </td>
                   <td style={{ ...C.td(), textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-                      {can('users','edit') && <button style={C.iBtn} onClick={() => handleEdit(u)}><Pencil size={14} color="#6366f1" /></button>}
+                      {can('users','edit') && <button style={C.iBtn} onClick={() => handleEdit(u)}><Pencil size={14} color="#00deab" /></button>}
                       {can('users','delete') && <button style={C.iBtn} onClick={() => handleDelete(u.id, u.name)}><Trash2 size={14} color="#dc2626" /></button>}
                     </div>
                   </td>
@@ -133,8 +133,8 @@ function UsersTab({ roles, branches, showToast }) {
           </div>
           {!editId && <FormField label="Password *"><Input type="password" placeholder="Min 6 characters" value={form.password} onChange={e => f('password', e.target.value)} /></FormField>}
           <div style={C.g2}>
-            <FormField label="Role"><Select value={form.role_id} onChange={e => f('role_id', e.target.value)}><option value="">— No Role —</option>{roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}</Select></FormField>
-            <FormField label="Branch"><Select value={form.branch_id} onChange={e => f('branch_id', e.target.value)}><option value="">— No Branch —</option>{branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></FormField>
+            <FormField label="Role"><Select value={form.role_id} onChange={e => f('role_id', e.target.value)}><option value="">- No Role -</option>{roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}</Select></FormField>
+            <FormField label="Branch"><Select value={form.branch_id} onChange={e => f('branch_id', e.target.value)}><option value="">- No Branch -</option>{branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></FormField>
           </div>
           {editId && <FormField label="Status"><Select value={form.active} onChange={e => f('active', +e.target.value)}><option value={1}>Active</option><option value={0}>Inactive</option></Select></FormField>}
           <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
@@ -205,12 +205,12 @@ function RolesTab({ onRoleChange, showToast }) {
           return (
             <div key={r.id} style={{ ...C.cardP, position: 'relative', paddingTop: 40 }}>
               <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 4, zIndex: 10 }}>
-                {can('users','edit') && <button style={C.iBtn} onClick={() => handleEdit(r)}><Pencil size={13} color="#6366f1" /></button>}
+                {can('users','edit') && <button style={C.iBtn} onClick={() => handleEdit(r)}><Pencil size={13} color="#00deab" /></button>}
                 {can('users','delete') && <button style={C.iBtn} onClick={() => handleDelete(r.id, r.name)}><Trash2 size={13} color="#dc2626" /></button>}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: isAdmin ? '#fffbeb' : '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {isAdmin ? <Key size={16} color="#d97706" /> : <Shield size={16} color="#4f46e5" />}
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: isAdmin ? '#fffbeb' : '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {isAdmin ? <Key size={16} color="#d97706" /> : <Shield size={16} color="#00deab" />}
                 </div>
                 <div style={{ flex: 1, paddingRight: 60 }}>
                   <p style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', margin: 0 }}>{r.name}</p>
@@ -267,8 +267,8 @@ function LogsTab() {
               <tr key={l.id} onMouseEnter={e => e.currentTarget.style.background='#f8fafc'} onMouseLeave={e => e.currentTarget.style.background='#fff'}>
                 <td style={C.tdb()}>{l.user_name || 'System'}</td>
                 <td style={{ ...C.td(), textTransform: 'capitalize' }}>{l.action}</td>
-                <td style={C.td()}>{l.module ? <span style={C.badge('#f1f5f9','#475569')}>{l.module}</span> : '—'}</td>
-                <td style={{ ...C.td(), fontSize: 12, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.detail || '—'}</td>
+                <td style={C.td()}>{l.module ? <span style={C.badge('#f1f5f9','#475569')}>{l.module}</span> : '-'}</td>
+                <td style={{ ...C.td(), fontSize: 12, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.detail || '-'}</td>
                 <td style={{ ...C.td(), fontSize: 12, whiteSpace: 'nowrap' }}>{l.created_at?.slice(0,16).replace('T',' ')}</td>
               </tr>
             ))}
@@ -312,3 +312,5 @@ export default function Users() {
     </div>
   )
 }
+
+
