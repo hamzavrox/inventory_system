@@ -1,4 +1,4 @@
-﻿const { ipcMain } = require('electron')
+const { ipcMain } = require('electron')
 const { getDB } = require('../db/database')
 const { v4: uuid } = require('uuid')
 const { enqueue } = require('./syncHelper')
@@ -9,6 +9,8 @@ module.exports = function registerInventoryHandlers() {
     const sign = type === 'out' ? -1 : 1
     db.transaction(() => {
       db.prepare(`UPDATE products SET quantity = quantity + ?, synced=0 WHERE id = ?`).run(sign * qty, productId)
+      const updatedProduct = db.prepare(`SELECT * FROM products WHERE id = ?`).get(productId)
+      enqueue(db, 'products', 'update', updatedProduct)
       const logRow = { id: uuid(), product_id: productId, type, quantity: qty, batch_no: batch_no || null, expiry_date: expiry_date || null, note: note || null, branch_id: branch_id || null }
       db.prepare(`INSERT INTO stock_log (id, product_id, type, quantity, batch_no, expiry_date, note, branch_id) VALUES (@id, @product_id, @type, @quantity, @batch_no, @expiry_date, @note, @branch_id)`).run(logRow)
       enqueue(db, 'stock_log', 'insert', logRow)
@@ -28,7 +30,7 @@ module.exports = function registerInventoryHandlers() {
     getDB().prepare(`
       SELECT s.*, p.name AS product_name FROM stock_log s
       LEFT JOIN products p ON p.id = s.product_id
-      ORDER BY s.created_at DESC LIMIT 500
+      ORDER BY s.created_at DESC LIMIT 100000
     `).all()
   )
 

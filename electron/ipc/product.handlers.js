@@ -1,4 +1,4 @@
-﻿const { ipcMain } = require('electron')
+const { ipcMain } = require('electron')
 const { getDB } = require('../db/database')
 const { v4: uuid } = require('uuid')
 const { enqueue, dequeue } = require('./syncHelper')
@@ -17,10 +17,10 @@ module.exports = function registerProductHandlers() {
   })
   ipcMain.handle('brands:delete', (_, id) => {
     const db = getDB()
+    const pendingInsert = db.prepare(`SELECT id FROM sync_queue WHERE table_name='brands' AND record_id=? AND operation='insert' AND status IN ('pending', 'failed')`).get(id)
     db.prepare(`DELETE FROM brands WHERE id = ?`).run(id)
-    const synced = db.prepare(`SELECT id FROM sync_queue WHERE table_name='brands' AND record_id=? AND status='synced'`).get(id)
-    if (synced) enqueue(db, 'brands', 'delete', { id })
-    else dequeue(db, 'brands', id)
+    if (pendingInsert) dequeue(db, 'brands', id)
+    else enqueue(db, 'brands', 'delete', { id })
     return { success: true }
   })
 
@@ -37,10 +37,10 @@ module.exports = function registerProductHandlers() {
   })
   ipcMain.handle('categories:delete', (_, id) => {
     const db = getDB()
+    const pendingInsert = db.prepare(`SELECT id FROM sync_queue WHERE table_name='categories' AND record_id=? AND operation='insert' AND status IN ('pending', 'failed')`).get(id)
     db.prepare(`DELETE FROM categories WHERE id = ?`).run(id)
-    const synced = db.prepare(`SELECT id FROM sync_queue WHERE table_name='categories' AND record_id=? AND status='synced'`).get(id)
-    if (synced) enqueue(db, 'categories', 'delete', { id })
-    else dequeue(db, 'categories', id)
+    if (pendingInsert) dequeue(db, 'categories', id)
+    else enqueue(db, 'categories', 'delete', { id })
     return { success: true }
   })
 
@@ -51,7 +51,8 @@ module.exports = function registerProductHandlers() {
       FROM products p
       LEFT JOIN categories c ON c.id = p.category_id
       LEFT JOIN brands b ON b.id = p.brand_id
-      WHERE p.deleted_at IS NULL ORDER BY p.name
+      WHERE (p.deleted_at IS NULL OR p.deleted_at = '' OR p.deleted_at = 'null')
+      ORDER BY p.name
     `).all()
   )
 
@@ -84,17 +85,17 @@ module.exports = function registerProductHandlers() {
 
   ipcMain.handle('products:delete', (_, id) => {
     const db = getDB()
+    const pendingInsert = db.prepare(`SELECT id FROM sync_queue WHERE table_name='products' AND record_id=? AND operation='insert' AND status IN ('pending', 'failed')`).get(id)
     db.prepare(`DELETE FROM products WHERE id=?`).run(id)
-    const synced = db.prepare(`SELECT id FROM sync_queue WHERE table_name='products' AND record_id=? AND status='synced'`).get(id)
-    if (synced) enqueue(db, 'products', 'delete', { id })
-    else dequeue(db, 'products', id)
+    if (pendingInsert) dequeue(db, 'products', id)
+    else enqueue(db, 'products', 'delete', { id })
     return { success: true }
   })
 
   ipcMain.handle('products:getLowStock', () =>
     getDB().prepare(`
       SELECT * FROM products
-      WHERE deleted_at IS NULL AND quantity <= low_stock_threshold
+      WHERE (deleted_at IS NULL OR deleted_at = '' OR deleted_at = 'null') AND quantity <= low_stock_threshold
       ORDER BY quantity ASC
     `).all()
   )
@@ -116,10 +117,10 @@ module.exports = function registerProductHandlers() {
   })
   ipcMain.handle('variants:delete', (_, id) => {
     const db = getDB()
+    const pendingInsert = db.prepare(`SELECT id FROM sync_queue WHERE table_name='product_variants' AND record_id=? AND operation='insert' AND status IN ('pending', 'failed')`).get(id)
     db.prepare(`DELETE FROM product_variants WHERE id = ?`).run(id)
-    const synced = db.prepare(`SELECT id FROM sync_queue WHERE table_name='product_variants' AND record_id=? AND status='synced'`).get(id)
-    if (synced) enqueue(db, 'product_variants', 'delete', { id })
-    else dequeue(db, 'product_variants', id)
+    if (pendingInsert) dequeue(db, 'product_variants', id)
+    else enqueue(db, 'product_variants', 'delete', { id })
     return { success: true }
   })
 }

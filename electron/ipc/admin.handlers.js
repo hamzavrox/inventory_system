@@ -1,4 +1,4 @@
-﻿const { ipcMain, app, dialog, BrowserWindow } = require('electron')
+const { ipcMain, app, dialog, BrowserWindow } = require('electron')
 const { getDB, reloadDB } = require('../db/database')
 const { v4: uuid } = require('uuid')
 const path = require('path')
@@ -22,10 +22,10 @@ module.exports = function registerAdminHandlers() {
   })
   ipcMain.handle('branches:delete', (_, id) => {
     const db = getDB()
+    const pendingInsert = db.prepare(`SELECT id FROM sync_queue WHERE table_name='branches' AND record_id=? AND operation='insert' AND status IN ('pending', 'failed')`).get(id)
     db.prepare(`DELETE FROM branches WHERE id = ?`).run(id)
-    const synced = db.prepare(`SELECT id FROM sync_queue WHERE table_name='branches' AND record_id=? AND status='synced'`).get(id)
-    if (synced) enqueue(db, 'branches', 'delete', { id })
-    else dequeue(db, 'branches', id)
+    if (pendingInsert) dequeue(db, 'branches', id)
+    else enqueue(db, 'branches', 'delete', { id })
     return { success: true }
   })
 
@@ -46,10 +46,10 @@ module.exports = function registerAdminHandlers() {
   })
   ipcMain.handle('shops:delete', (_, id) => {
     const db = getDB()
+    const pendingInsert = db.prepare(`SELECT id FROM sync_queue WHERE table_name='shops' AND record_id=? AND operation='insert' AND status IN ('pending', 'failed')`).get(id)
     db.prepare(`DELETE FROM shops WHERE id = ?`).run(id)
-    const synced = db.prepare(`SELECT id FROM sync_queue WHERE table_name='shops' AND record_id=? AND status='synced'`).get(id)
-    if (synced) enqueue(db, 'shops', 'delete', { id })
-    else dequeue(db, 'shops', id)
+    if (pendingInsert) dequeue(db, 'shops', id)
+    else enqueue(db, 'shops', 'delete', { id })
     return { success: true }
   })
 
@@ -80,10 +80,10 @@ module.exports = function registerAdminHandlers() {
   })
   ipcMain.handle('users:delete', (_, id) => {
     const db = getDB()
+    const pendingInsert = db.prepare(`SELECT id FROM sync_queue WHERE table_name='users' AND record_id=? AND operation='insert' AND status IN ('pending', 'failed')`).get(id)
     db.prepare(`DELETE FROM users WHERE id = ?`).run(id)
-    const synced = db.prepare(`SELECT id FROM sync_queue WHERE table_name='users' AND record_id=? AND status='synced'`).get(id)
-    if (synced) enqueue(db, 'users', 'delete', { id })
-    else dequeue(db, 'users', id)
+    if (pendingInsert) dequeue(db, 'users', id)
+    else enqueue(db, 'users', 'delete', { id })
     return { success: true }
   })
   ipcMain.handle('users:login', (_, { username, password }) => {
@@ -116,10 +116,10 @@ module.exports = function registerAdminHandlers() {
   })
   ipcMain.handle('roles:delete', (_, id) => {
     const db = getDB()
+    const pendingInsert = db.prepare(`SELECT id FROM sync_queue WHERE table_name='roles' AND record_id=? AND operation='insert' AND status IN ('pending', 'failed')`).get(id)
     db.prepare(`DELETE FROM roles WHERE id=?`).run(id)
-    const synced = db.prepare(`SELECT id FROM sync_queue WHERE table_name='roles' AND record_id=? AND status='synced'`).get(id)
-    if (synced) enqueue(db, 'roles', 'delete', { id })
-    else dequeue(db, 'roles', id)
+    if (pendingInsert) dequeue(db, 'roles', id)
+    else enqueue(db, 'roles', 'delete', { id })
     return { success: true }
   })
 
@@ -133,7 +133,7 @@ module.exports = function registerAdminHandlers() {
     getDB().prepare(`
       SELECT l.*, u.name AS user_name FROM activity_logs l
       LEFT JOIN users u ON u.id = l.user_id
-      ORDER BY l.created_at DESC LIMIT 500
+      ORDER BY l.created_at DESC LIMIT 100000
     `).all()
   )
 
@@ -162,13 +162,10 @@ module.exports = function registerAdminHandlers() {
   })
   ipcMain.handle('discounts:delete', (_, id) => {
     const db = getDB()
+    const pendingInsert = db.prepare(`SELECT id FROM sync_queue WHERE table_name='discounts' AND record_id=? AND operation='insert' AND status IN ('pending', 'failed')`).get(id)
     db.prepare(`DELETE FROM discounts WHERE id=?`).run(id)
-    const synced = db.prepare(`SELECT id FROM sync_queue WHERE table_name='discounts' AND record_id=? AND status='synced'`).get(id)
-    if (synced) {
-      enqueue(db, 'discounts', 'delete', { id })
-    } else {
-      dequeue(db, 'discounts', id)
-    }
+    if (pendingInsert) dequeue(db, 'discounts', id)
+    else enqueue(db, 'discounts', 'delete', { id })
     return { success: true }
   })
 
@@ -305,9 +302,9 @@ module.exports = function registerAdminHandlers() {
       { name: 'users',            query: `SELECT * FROM users` },
       { name: 'brands',           query: `SELECT * FROM brands` },
       { name: 'categories',       query: `SELECT * FROM categories` },
-      { name: 'products',         query: `SELECT * FROM products WHERE deleted_at IS NULL` },
+      { name: 'products',         query: `SELECT * FROM products WHERE (deleted_at IS NULL OR deleted_at = '' OR deleted_at = 'null')` },
       { name: 'product_variants', query: `SELECT * FROM product_variants` },
-      { name: 'customers',        query: `SELECT * FROM customers WHERE deleted_at IS NULL` },
+      { name: 'customers',        query: `SELECT * FROM customers WHERE (deleted_at IS NULL OR deleted_at = '' OR deleted_at = 'null')` },
       { name: 'discounts',        query: `SELECT * FROM discounts` },
       { name: 'sales',            query: `SELECT * FROM sales` },
       { name: 'sale_items',       query: `SELECT * FROM sale_items` },

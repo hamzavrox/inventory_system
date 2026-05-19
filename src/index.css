@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --primary: #00deab;
   --primary-glow: rgba(16, 185, 129, 0.15);
   --bg-body: #f8fafc;
@@ -42,6 +42,11 @@ html, body {
   height: 100vh;
   display: flex;
   overflow: hidden;
+}
+
+input[type="checkbox"] {
+  accent-color: var(--primary);
+  cursor: pointer;
 }
 
 /* â”€â”€ Scrollbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */

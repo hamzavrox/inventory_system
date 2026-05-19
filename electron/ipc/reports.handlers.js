@@ -1,4 +1,4 @@
-﻿const { ipcMain } = require('electron')
+const { ipcMain } = require('electron')
 const { getDB } = require('../db/database')
 
 module.exports = function registerReportHandlers() {
@@ -83,7 +83,7 @@ module.exports = function registerReportHandlers() {
       FROM products p
       LEFT JOIN categories c ON c.id = p.category_id
       LEFT JOIN brands b ON b.id = p.brand_id
-      WHERE p.deleted_at IS NULL
+      WHERE (p.deleted_at IS NULL OR p.deleted_at = '' OR p.deleted_at = 'null')
       ORDER BY p.name
     `).all()
   )

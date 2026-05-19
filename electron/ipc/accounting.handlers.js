@@ -1,4 +1,4 @@
-﻿const { ipcMain } = require('electron')
+const { ipcMain } = require('electron')
 const { getDB } = require('../db/database')
 const { v4: uuid } = require('uuid')
 const { enqueue } = require('./syncHelper')
@@ -10,7 +10,7 @@ module.exports = function registerAccountingHandlers() {
     if (type) { q += ` AND type = ?`;        params.push(type) }
     if (from) { q += ` AND created_at >= ?`; params.push(from) }
     if (to)   { q += ` AND created_at <= ?`; params.push(to) }
-    q += ` ORDER BY created_at DESC LIMIT 500`
+    q += ` ORDER BY created_at DESC LIMIT 100000`
     return getDB().prepare(q).all(...params)
   })
 

@@ -1,4 +1,4 @@
-﻿const { ipcMain } = require('electron')
+const { ipcMain } = require('electron')
 const { getDB } = require('../db/database')
 const { v4: uuid } = require('uuid')
 const { enqueue } = require('./syncHelper')
@@ -58,7 +58,7 @@ module.exports = function registerSalesHandlers() {
     return { id, invoice_no, total, change_due }
   })
 
-  ipcMain.handle('sales:getAll', (_, { limit = 100, offset = 0 } = {}) =>
+  ipcMain.handle('sales:getAll', (_, { limit = 100000, offset = 0 } = {}) =>
     getDB().prepare(`
       SELECT s.*, c.name AS customer_name
       FROM sales s LEFT JOIN customers c ON c.id = s.customer_id

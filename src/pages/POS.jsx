@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Search, Plus, Minus, Trash2, ShoppingCart, User,
   CreditCard, Printer, RotateCcw, X, Check, Tag, Eye, Download
@@ -173,7 +173,7 @@ export default function POS() {
     }
   }, [tab, products])
 
-  const loadSales = () => window.api.sales.getAll({ limit: 100 }).then(setSales).catch(() => { })
+  const loadSales = () => window.api.sales.getAll({ limit: 100000 }).then(setSales).catch(() => { })
   useEffect(() => { if (tab === 'history') loadSales() }, [tab])
 
   const handleViewInvoice = async (s) => {

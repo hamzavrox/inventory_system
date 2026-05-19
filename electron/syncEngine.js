@@ -1,4 +1,4 @@
-﻿const { getDB } = require('./db/database')
+const { getDB } = require('./db/database')
 const { v4: uuid } = require('uuid')
 
 const MAX_RETRIES = 3
@@ -107,7 +107,7 @@ async function pullSync(apiUrl, authToken) {
   } catch {}
 
   const res = await httpRequest(
-    `${normalizeUrl(apiUrl)}/sync/pull?since=${encodeURIComponent(since)}`,
+    `${normalizeUrl(apiUrl)}/sync/pull?since=${encodeURIComponent(since)}&limit=999999`,
     {
       headers: { 'Authorization': `Bearer ${authToken || ''}` },
     }
@@ -117,19 +117,33 @@ async function pullSync(apiUrl, authToken) {
 
   const { data, pulledAt } = await res.json()
   let pulled = 0
+  const tableInfoCache = {}
+  function getTableCols(tableName) {
+    if (tableInfoCache[tableName]) return tableInfoCache[tableName]
+    const info = db.prepare(`PRAGMA table_info(${tableName})`).all()
+    if (!info.length) return null
+    const cols = info.map(c => c.name)
+    tableInfoCache[tableName] = cols
+    return cols
+  }
 
   for (const [table, rows] of Object.entries(data)) {
+    const validCols = getTableCols(table)
+    if (!validCols) continue
+
     for (const row of rows) {
       try {
-        const cols    = Object.keys(row)
-        const vals    = Object.values(row).map(v => v instanceof Date ? v.toISOString() : v)
+        const cols    = Object.keys(row).filter(c => validCols.includes(c))
+        if (!cols.length) continue
+        const vals    = cols.map(c => row[c] instanceof Date ? row[c].toISOString() : row[c])
         const setCols = cols.filter(c => c !== 'id').map(c => `${c}=excluded.${c}`).join(', ')
+        
         db.prepare(`
           INSERT INTO ${table} (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})
           ON CONFLICT(id) DO UPDATE SET ${setCols}
         `).run(...vals)
         pulled++
-      } catch { /* skip unknown tables */ }
+      } catch (err) { console.error('Pull Error on', table, err.message) }
     }
   }
 
@@ -156,7 +170,7 @@ async function pullAll(apiUrl, authToken) {
   const db = getDB()
 
   const res = await httpRequest(
-    `${normalizeUrl(apiUrl)}/sync/pull?since=${encodeURIComponent('1970-01-01T00:00:00Z')}`,
+    `${normalizeUrl(apiUrl)}/sync/pull?since=${encodeURIComponent('1970-01-01T00:00:00Z')}&limit=999999`,
     { headers: { 'Authorization': `Bearer ${authToken || ''}` } }
   )
 
@@ -164,19 +178,33 @@ async function pullAll(apiUrl, authToken) {
 
   const { data } = await res.json()
   let pulled = 0
+  const tableInfoCache = {}
+  function getTableCols(tableName) {
+    if (tableInfoCache[tableName]) return tableInfoCache[tableName]
+    const info = db.prepare(`PRAGMA table_info(${tableName})`).all()
+    if (!info.length) return null
+    const cols = info.map(c => c.name)
+    tableInfoCache[tableName] = cols
+    return cols
+  }
 
   for (const [table, rows] of Object.entries(data)) {
+    const validCols = getTableCols(table)
+    if (!validCols) continue
+
     for (const row of rows) {
       try {
-        const cols    = Object.keys(row)
-        const vals    = Object.values(row).map(v => v instanceof Date ? v.toISOString() : v)
+        const cols    = Object.keys(row).filter(c => validCols.includes(c))
+        if (!cols.length) continue
+        const vals    = cols.map(c => row[c] instanceof Date ? row[c].toISOString() : row[c])
         const setCols = cols.filter(c => c !== 'id').map(c => `${c}=excluded.${c}`).join(', ')
+        
         db.prepare(`
           INSERT INTO ${table} (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})
           ON CONFLICT(id) DO UPDATE SET ${setCols}
         `).run(...vals)
         pulled++
-      } catch { }
+      } catch (err) { console.error('PullAll Error on', table, err.message) }
     }
   }
 

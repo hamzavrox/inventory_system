@@ -1,12 +1,25 @@
-﻿const { ipcMain } = require('electron')
+const { ipcMain } = require('electron')
 const { getDB } = require('../db/database')
 const { v4: uuid } = require('uuid')
 const { enqueue, dequeue } = require('./syncHelper')
 
 module.exports = function registerCustomerHandlers() {
-  ipcMain.handle('customers:getAll', () =>
-    getDB().prepare(`SELECT * FROM customers WHERE deleted_at IS NULL ORDER BY name`).all()
-  )
+  ipcMain.handle('customers:getAll', () => {
+    const db = getDB()
+    // Auto-migrate any old soft-deleted customers to the new physical delete sync queue
+    try {
+      const softDeleted = db.prepare(`SELECT id FROM customers WHERE deleted_at IS NOT NULL AND deleted_at != '' AND deleted_at != 'null'`).all()
+      for (const c of softDeleted) {
+        const pendingInsert = db.prepare(`SELECT id FROM sync_queue WHERE table_name='customers' AND record_id=? AND operation='insert' AND status IN ('pending', 'failed')`).get(c.id)
+        db.prepare(`DELETE FROM customers WHERE id = ?`).run(c.id)
+        if (pendingInsert) dequeue(db, 'customers', c.id)
+        else enqueue(db, 'customers', 'delete', { id: c.id })
+      }
+    } catch (e) {
+      console.error('Error auto-migrating soft deleted customers:', e.message)
+    }
+    return db.prepare(`SELECT * FROM customers ORDER BY name`).all()
+  })
 
   ipcMain.handle('customers:add', (_, data) => {
     const db  = getDB()
@@ -27,10 +40,10 @@ module.exports = function registerCustomerHandlers() {
 
   ipcMain.handle('customers:delete', (_, id) => {
     const db = getDB()
-    db.prepare(`UPDATE customers SET deleted_at=datetime('now') WHERE id=?`).run(id)
-    const synced = db.prepare(`SELECT id FROM sync_queue WHERE table_name='customers' AND record_id=? AND status='synced'`).get(id)
-    if (synced) enqueue(db, 'customers', 'delete', { id })
-    else dequeue(db, 'customers', id)
+    const pendingInsert = db.prepare(`SELECT id FROM sync_queue WHERE table_name='customers' AND record_id=? AND operation='insert' AND status IN ('pending', 'failed')`).get(id)
+    db.prepare(`DELETE FROM customers WHERE id = ?`).run(id)
+    if (pendingInsert) dequeue(db, 'customers', id)
+    else enqueue(db, 'customers', 'delete', { id })
     return { success: true }
   })
 
