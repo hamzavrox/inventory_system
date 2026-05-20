@@ -58,11 +58,17 @@ app.whenReady().then(() => {
       const fs  = require('fs')
       const cfgFile  = path.join(app.getPath('userData'), 'auto_backup.json')
       const lastFile = path.join(app.getPath('userData'), 'auto_backup_last.txt')
-      if (!fs.existsSync(cfgFile)) return
-      const cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'))
+      
+      let cfg = { enabled: true, time: '17:00' }
+      if (fs.existsSync(cfgFile)) {
+        cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'))
+      } else {
+        fs.writeFileSync(cfgFile, JSON.stringify(cfg))
+      }
+      
       if (!cfg.enabled) return
 
-      const [h, m] = (cfg.time || '02:00').split(':').map(Number)
+      const [h, m] = (cfg.time || '17:00').split(':').map(Number)
       const now  = new Date()
       const last = fs.existsSync(lastFile) ? fs.readFileSync(lastFile, 'utf8').trim() : ''
 
@@ -141,8 +147,11 @@ app.whenReady().then(() => {
   ipcMain.handle('autobackup:load', () => {
     try {
       const f = path.join(app.getPath('userData'), 'auto_backup.json')
-      return JSON.parse(require('fs').readFileSync(f, 'utf8'))
-    } catch { return { enabled: false, time: '02:00' } }
+      if (require('fs').existsSync(f)) {
+        return JSON.parse(require('fs').readFileSync(f, 'utf8'))
+      }
+      return { enabled: true, time: '17:00' }
+    } catch { return { enabled: true, time: '17:00' } }
   })
 
   createWindow()

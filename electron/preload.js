@@ -1,4 +1,4 @@
-﻿const { contextBridge, ipcRenderer } = require('electron')
+const { contextBridge, ipcRenderer } = require('electron')
 
 const invoke = (ch, ...a) => ipcRenderer.invoke(ch, ...a)
 
@@ -133,7 +133,18 @@ contextBridge.exposeInMainWorld('api', {
     load: ()    => invoke('autobackup:load'),
   },
 
-  // â”€â”€ Backup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  integrations: {
+    testPayment: (gateway, key, secret) => invoke('integrations:testPayment', gateway, key, secret),
+    testShopify: (storeUrl, token)        => invoke('integrations:testShopify', storeUrl, token),
+    saveSettings: (cfg)                   => invoke('integrations:saveSettings', cfg),
+    loadSettings: ()                      => invoke('integrations:loadSettings'),
+  },
+
+  shopify: {
+    syncProduct: (productId) => invoke('shopify:syncProduct', productId),
+  },
+
+  // ────────────────────────────────────────────────────────────────────────────────
   backup: {
     create:     ()          => invoke('backup:create'),
     getAll:     ()          => invoke('backup:getAll'),

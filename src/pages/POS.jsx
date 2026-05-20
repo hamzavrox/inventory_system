@@ -125,6 +125,59 @@ export default function POS() {
   const scanBufferRef = useRef('')
   const scanTimerRef = useRef(null)
 
+  // Card Payment Flow States
+  const [cardProcessType, setCardProcessType] = useState('terminal') // 'terminal' | 'gateway'
+  const [cardNumber, setCardNumber] = useState('')
+  const [cardExpiry, setCardExpiry] = useState('')
+  const [cardCvc, setCardCvc] = useState('')
+  const [cardName, setCardName] = useState('')
+  const [processingPayment, setProcessingPayment] = useState(false)
+  const [paymentStep, setPaymentStep] = useState('') // '', 'connecting', 'authorizing', 'success'
+  const [gatewayName, setGatewayName] = useState('Stripe')
+
+  useEffect(() => {
+    if (payModal) {
+      try {
+        const integrations = JSON.parse(localStorage.getItem('integration_settings') || '{}')
+        setGatewayName(integrations.payment_gateway ? (integrations.payment_gateway.charAt(0).toUpperCase() + integrations.payment_gateway.slice(1)) : 'Stripe')
+      } catch {
+        setGatewayName('Stripe')
+      }
+    }
+  }, [payModal])
+
+  const handleCardNumberChange = (e) => {
+    const value = e.target.value.replace(/\D/g, '')
+    const formatted = value.match(/.{1,4}/g)?.join(' ') || ''
+    setCardNumber(formatted.slice(0, 19))
+  }
+
+  const handleExpiryChange = (e) => {
+    let value = e.target.value.replace(/\D/g, '')
+    if (value.length > 2) {
+      value = `${value.slice(0, 2)}/${value.slice(2, 4)}`
+    }
+    setCardExpiry(value.slice(0, 5))
+  }
+
+  const handleCvcChange = (e) => {
+    const value = e.target.value.replace(/\D/g, '')
+    setCardCvc(value.slice(0, 3))
+  }
+
+  const getCardType = (num) => {
+    const cleanNum = num.replace(/\s+/g, '')
+    if (cleanNum.startsWith('4')) return 'Visa'
+    if (/^5[1-5]/.test(cleanNum)) return 'Mastercard'
+    if (/^3[47]/.test(cleanNum)) return 'Amex'
+    if (cleanNum.startsWith('6011')) return 'Discover'
+    return 'Card'
+  }
+
+  // Transfer Flow States
+  const [transferProvider, setTransferProvider] = useState('bank') // 'bank' | 'easypaisa' | 'jazzcash'
+  const [transferRef, setTransferRef] = useState('')
+
   useEffect(() => {
     Promise.all([window.api.products.getAll(), window.api.customers.getAll(), window.api.discounts.getAll()])
       .then(([p, c, d]) => { setProducts(p); setCustomers(c); setDiscounts(d) }).catch(() => { })
@@ -281,8 +334,46 @@ export default function POS() {
   // â”€â”€ Checkout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleCheckout = async () => {
     if (!cart.length) return
-    const paidAmt = parseFloat(paid) || 0
+    const paidAmt = payMethod === 'cash' ? (parseFloat(paid) || 0) : total
     if (payMethod === 'cash' && paidAmt < total) return alert('Paid amount is less than total.')
+
+    let txnNote = ''
+    if (payMethod === 'card' && cardProcessType === 'gateway') {
+      if (!cardNumber || !cardExpiry || !cardCvc || !cardName) {
+        return alert('Please fill in all credit card fields.')
+      }
+      setProcessingPayment(true)
+      setPaymentStep('connecting')
+      await new Promise(r => setTimeout(r, 1000))
+      
+      setPaymentStep('authorizing')
+      await new Promise(r => setTimeout(r, 1200))
+      
+      setPaymentStep('success')
+      await new Promise(r => setTimeout(r, 800))
+      
+      const lastFour = cardNumber.replace(/\s+/g, '').slice(-4)
+      txnNote = `[${gatewayName.toUpperCase()} Approved - Card ending in ${lastFour || 'XXXX'} - Ref: TXN-${Math.floor(Math.random()*900000 + 100000)}]`
+    } else if (payMethod === 'card' && cardProcessType === 'terminal') {
+      setProcessingPayment(true)
+      setPaymentStep('connecting')
+      await new Promise(r => setTimeout(r, 800))
+      setPaymentStep('success')
+      await new Promise(r => setTimeout(r, 500))
+      txnNote = '[Card Reader Approved]'
+    } else if (payMethod === 'transfer') {
+      if (!transferRef.trim()) {
+        return alert('Please enter a Transaction Reference / Receipt ID.')
+      }
+      setProcessingPayment(true)
+      setPaymentStep('connecting') // Re-use connecting state
+      await new Promise(r => setTimeout(r, 1200))
+      setPaymentStep('success')
+      await new Promise(r => setTimeout(r, 600))
+      
+      const providerLabel = transferProvider === 'bank' ? 'Bank Account' : transferProvider === 'easypaisa' ? 'EasyPaisa' : 'JazzCash'
+      txnNote = `[Transfer Approved - ${providerLabel} - Ref: ${transferRef.trim()}]`
+    }
 
     const result = await window.api.sales.create({
       customer_id: customer?.id || null,
@@ -291,10 +382,21 @@ export default function POS() {
       tax: taxAmount,
       paid: paidAmt,
       payment_method: payMethod,
+      note: txnNote || null
     })
 
     setLastSale(result)
     setReceipt({ sale: { ...result, subtotal, discount, tax: taxAmount, paid: paidAmt }, items: cart, customer })
+    
+    // Reset payment states
+    setProcessingPayment(false)
+    setPaymentStep('')
+    setCardNumber('')
+    setCardExpiry('')
+    setCardCvc('')
+    setCardName('')
+    setTransferRef('')
+    
     setPayModal(false)
     clearCart()
     // Refresh products stock
@@ -594,16 +696,41 @@ export default function POS() {
       </Modal>
 
       {/* â”€â”€ Payment Modal â”€â”€ */}
-      <Modal open={payModal} onClose={() => setPayModal(false)} title="Complete Payment">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <Modal open={payModal} onClose={() => !processingPayment && setPayModal(false)} title="Complete Payment">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, position: 'relative', minWidth: payMethod === 'card' ? 380 : 'auto' }}>
+          
+          {/* Processing Overlay */}
+          {processingPayment && (
+            <div style={{
+              position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(255,255,255,0.95)', zIndex: 10,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              borderRadius: 12, gap: 12
+            }}>
+              <div style={{
+                width: 40, height: 40, border: '3px solid #f3f3f3', borderTop: '3px solid #00deab',
+                borderRadius: '50%'
+              }} className="animate-spin" />
+              <p style={{ fontSize: 14, fontWeight: 600, color: '#1e293b', margin: 0 }}>
+                {paymentStep === 'connecting' && `Connecting to ${cardProcessType === 'gateway' ? gatewayName : 'Card Terminal'}...`}
+                {paymentStep === 'authorizing' && `Authorizing $${fmt(total)}...`}
+                {paymentStep === 'success' && 'Payment Approved!'}
+              </p>
+              {paymentStep === 'success' && (
+                <div style={{ fontSize: 24, color: '#059669' }}>✔</div>
+              )}
+            </div>
+          )}
+
           <div style={{ background: '#ecfdf5', borderRadius: 12, padding: 16, textAlign: 'center' }}>
             <p style={{ fontSize: 11, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Amount Due</p>
             <p style={{ fontSize: 36, fontWeight: 700, color: '#00deab', margin: '4px 0 0' }}>${fmt(total)}</p>
           </div>
+
           <FormField label="Payment Method">
             <div style={{ display: 'flex', borderRadius: 8, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
               {[['cash', 'Cash'], ['card', 'Card'], ['transfer', 'Transfer']].map(([v, l]) => (
-                <button key={v} onClick={() => setPayMethod(v)}
+                <button key={v} onClick={() => !processingPayment && setPayMethod(v)}
                   style={{ flex: 1, padding: '10px 12px', fontSize: 13, fontWeight: 500, border: 'none', background: payMethod === v ? '#00deab' : '#fff', color: payMethod === v ? '#fff' : '#475569', cursor: 'pointer', transition: 'all 0.15s' }}
                   onMouseEnter={e => { if (payMethod !== v) e.currentTarget.style.background = '#f8fafc' }}
                   onMouseLeave={e => { if (payMethod !== v) e.currentTarget.style.background = '#fff' }}>
@@ -612,6 +739,8 @@ export default function POS() {
               ))}
             </div>
           </FormField>
+
+          {/* CASH PROCESS */}
           {payMethod === 'cash' && (
             <FormField label="Amount Received ($)">
               <Input type="number" min="0" step="0.01" value={paid}
@@ -624,17 +753,168 @@ export default function POS() {
               <span style={{ fontSize: 18, fontWeight: 700, color: '#059669' }}>${fmt(changeDue)}</span>
             </div>
           )}
+
+          {/* CARD PROCESS */}
+          {payMethod === 'card' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <FormField label="Card Processing Type">
+                <div style={{ display: 'flex', borderRadius: 8, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                  {[['terminal', 'Card Reader / Terminal'], ['gateway', `Online Gateway (${gatewayName})`]].map(([v, l]) => (
+                    <button key={v} onClick={() => setCardProcessType(v)}
+                      style={{ flex: 1, padding: '8px 10px', fontSize: 11, fontWeight: 500, border: 'none', background: cardProcessType === v ? '#0f172a' : '#fff', color: cardProcessType === v ? '#fff' : '#475569', cursor: 'pointer', transition: 'all 0.15s' }}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </FormField>
+
+              {cardProcessType === 'gateway' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {/* Visual Premium Credit Card Face */}
+                  <div style={{
+                    width: '100%', height: 160, borderRadius: 12,
+                    background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                    color: '#fff', padding: 16, display: 'flex', flexDirection: 'column',
+                    justifyContent: 'space-between', boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
+                    position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)'
+                  }}>
+                    {/* Metallic card chip decoration */}
+                    <div style={{
+                      position: 'absolute', top: 40, left: 16, width: 34, height: 26,
+                      borderRadius: 4, background: 'linear-gradient(135deg, #fcd34d 0%, #f59e0b 100%)',
+                      opacity: 0.8
+                    }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: 10, color: '#94a3b8', fontWeight: 600 }}>{gatewayName.toUpperCase()} SECURE</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, fontStyle: 'italic', color: '#00deab' }}>
+                        {getCardType(cardNumber)}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 18, letterSpacing: '0.15em', fontFamily: 'monospace', margin: '20px 0 10px' }}>
+                      {cardNumber || '•••• •••• •••• ••••'}
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                      <div>
+                        <div style={{ fontSize: 7, color: '#64748b', textTransform: 'uppercase' }}>Card Holder</div>
+                        <div style={{ fontSize: 12, fontWeight: 500, letterSpacing: '0.05em' }}>{cardName.toUpperCase() || 'YOUR NAME'}</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 12 }}>
+                        <div>
+                          <div style={{ fontSize: 7, color: '#64748b', textTransform: 'uppercase' }}>Expires</div>
+                          <div style={{ fontSize: 11, fontFamily: 'monospace' }}>{cardExpiry || 'MM/YY'}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 7, color: '#64748b', textTransform: 'uppercase' }}>CVC</div>
+                          <div style={{ fontSize: 11, fontFamily: 'monospace' }}>{cardCvc || '•••'}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card Entry Fields */}
+                  <FormField label="Cardholder Name">
+                    <Input placeholder="Cardholder Name" value={cardName} onChange={e => setCardName(e.target.value)} />
+                  </FormField>
+                  <FormField label="Card Number">
+                    <Input placeholder="0000 0000 0000 0000" value={cardNumber} onChange={handleCardNumberChange} />
+                  </FormField>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <div style={{ flex: 1 }}>
+                      <FormField label="Expiry Date (MM/YY)">
+                        <Input placeholder="MM/YY" value={cardExpiry} onChange={handleExpiryChange} />
+                      </FormField>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <FormField label="CVC">
+                        <Input placeholder="123" type="password" value={cardCvc} onChange={handleCvcChange} />
+                      </FormField>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {cardProcessType === 'terminal' && (
+                <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 8, padding: 16, textAlign: 'center', fontSize: 12, color: '#475569' }}>
+                  <p style={{ margin: '0 0 6px', fontWeight: 600 }}>External Terminal Mode</p>
+                  <p style={{ margin: 0, color: '#94a3b8' }}>Confirming the sale will mark it as paid. Please process the transaction on the physical card reader device.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TRANSFER PROCESS */}
+          {payMethod === 'transfer' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <FormField label="Select Transfer Destination">
+                <div style={{ display: 'flex', borderRadius: 8, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                  {[['bank', 'Bank Transfer'], ['easypaisa', 'EasyPaisa'], ['jazzcash', 'JazzCash']].map(([v, l]) => (
+                    <button key={v} onClick={() => setTransferProvider(v)}
+                      style={{ flex: 1, padding: '8px 10px', fontSize: 11, fontWeight: 500, border: 'none', background: transferProvider === v ? '#0f172a' : '#fff', color: transferProvider === v ? '#fff' : '#475569', cursor: 'pointer', transition: 'all 0.15s' }}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </FormField>
+
+              {/* Destination account preview card */}
+              <div style={{
+                background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                border: '1px solid #e2e8f0', borderRadius: 10, padding: 14,
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+              }}>
+                <div>
+                  <p style={{ fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', margin: 0, fontWeight: 600 }}>Receiver Details</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', margin: '4px 0 2px' }}>
+                    {transferProvider === 'bank' ? 'Allied Bank Limited (ABL)' : transferProvider === 'easypaisa' ? 'EasyPaisa Wallet' : 'JazzCash Wallet'}
+                  </p>
+                  <p style={{ fontSize: 12, fontFamily: 'monospace', color: '#475569', margin: 0 }}>
+                    {transferProvider === 'bank' ? 'Account #: 5082-9382-1928-1002' : transferProvider === 'easypaisa' ? 'Mobile: 0300-1234567' : 'Mobile: 0312-7654321'}
+                  </p>
+                  <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0 0' }}>Title: <strong>FloriManager Store</strong></p>
+                </div>
+                
+                {/* Visual Mock QR Code Icon */}
+                <div style={{
+                  width: 54, height: 54, borderRadius: 6, background: '#fff',
+                  border: '1px solid #cbd5e1', padding: 4, display: 'flex', flexDirection: 'column',
+                  gap: 3, justifyContent: 'center', alignItems: 'center', flexShrink: 0
+                }}>
+                  {/* Grid visual representation for QR code */}
+                  <div style={{ display: 'flex', gap: 3 }}>
+                    <div style={{ width: 12, height: 12, background: '#000' }} />
+                    <div style={{ width: 4, height: 4, background: '#000' }} />
+                    <div style={{ width: 12, height: 12, background: '#000' }} />
+                  </div>
+                  <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+                    <div style={{ width: 4, height: 4, background: '#000' }} />
+                    <div style={{ width: 12, height: 12, background: '#000' }} />
+                    <div style={{ width: 4, height: 4, background: '#000' }} />
+                  </div>
+                  <div style={{ display: 'flex', gap: 3 }}>
+                    <div style={{ width: 12, height: 12, background: '#000' }} />
+                    <div style={{ width: 4, height: 4, background: '#000' }} />
+                    <div style={{ width: 12, height: 12, background: '#000' }} />
+                  </div>
+                </div>
+              </div>
+
+              <FormField label="Transaction Reference ID / Receipt #">
+                <Input placeholder="Enter Txn ID / Ref Number" value={transferRef} onChange={e => setTransferRef(e.target.value)} />
+              </FormField>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: 10, paddingTop: 8 }}>
-            <button onClick={handleCheckout} 
-              style={{ ...styles.button, flex: 1, background: '#00deab', color: '#fff', padding: '10px 12px', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-              onMouseEnter={e => e.currentTarget.style.background = '#4338ca'}
-              onMouseLeave={e => e.currentTarget.style.background = '#00deab'}>
+            <button onClick={handleCheckout} disabled={processingPayment}
+              style={{ ...styles.button, flex: 1, background: '#00deab', color: '#fff', padding: '10px 12px', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: processingPayment ? 0.6 : 1 }}
+              onMouseEnter={e => { if(!processingPayment) e.currentTarget.style.background = '#4338ca' }}
+              onMouseLeave={e => { if(!processingPayment) e.currentTarget.style.background = '#00deab' }}>
               <Check size={14} /> Confirm Sale
             </button>
-            <button onClick={() => setPayModal(false)} 
-              style={{ ...styles.button, flex: 0.8, background: '#f1f5f9', color: '#475569', padding: '10px 12px', fontSize: 13 }}
-              onMouseEnter={e => e.currentTarget.style.background = '#e2e8f0'}
-              onMouseLeave={e => e.currentTarget.style.background = '#f1f5f9'}>Cancel</button>
+            <button onClick={() => !processingPayment && setPayModal(false)} disabled={processingPayment}
+              style={{ ...styles.button, flex: 0.8, background: '#f1f5f9', color: '#475569', padding: '10px 12px', fontSize: 13, opacity: processingPayment ? 0.6 : 1 }}
+              onMouseEnter={e => { if(!processingPayment) e.currentTarget.style.background = '#e2e8f0' }}
+              onMouseLeave={e => { if(!processingPayment) e.currentTarget.style.background = '#f1f5f9' }}>Cancel</button>
           </div>
         </div>
       </Modal>

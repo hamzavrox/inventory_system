@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CreditCard, ShoppingBag, CheckCircle, XCircle, RefreshCw, Save } from 'lucide-react'
 import { FormField, Input, Select, Btn } from '../components/FormField'
 import { C } from '../utils/pageStyles'
@@ -12,15 +12,47 @@ export default function Integrations() {
   const [saved,      setSaved]      = useState(false)
   const [testing,    setTesting]    = useState({})
   const [testResult, setTestResult] = useState({})
+  const [testMessage, setTestMessage] = useState({})
   const f = (k, v) => setCfg(s => ({ ...s, [k]: v }))
 
-  const handleSave = () => { localStorage.setItem(LS_KEY, JSON.stringify(cfg)); setSaved(true); setTimeout(() => setSaved(false), 2000) }
+  useEffect(() => {
+    window.api.integrations.loadSettings().then(savedCfg => {
+      if (savedCfg) {
+        setCfg(savedCfg)
+        localStorage.setItem(LS_KEY, JSON.stringify(savedCfg))
+      }
+    }).catch(err => console.error("Failed to load settings via IPC:", err))
+  }, [])
+
+  const handleSave = async () => {
+    localStorage.setItem(LS_KEY, JSON.stringify(cfg))
+    try {
+      await window.api.integrations.saveSettings(cfg)
+    } catch (err) {
+      console.error("Failed to save settings via IPC:", err)
+    }
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
 
   const testConnection = async (type) => {
-    setTesting(s => ({ ...s, [type]: true })); setTestResult(s => ({ ...s, [type]: null }))
-    await new Promise(r => setTimeout(r, 1200))
-    const ok = type === 'payment' ? cfg.payment_key && cfg.payment_secret : cfg.shopify_store && cfg.shopify_token
-    setTestResult(s => ({ ...s, [type]: ok ? 'success' : 'missing' }))
+    setTesting(s => ({ ...s, [type]: true }))
+    setTestResult(s => ({ ...s, [type]: null }))
+    setTestMessage(s => ({ ...s, [type]: '' }))
+
+    let res = { success: false, message: 'Invalid test execution.' }
+    try {
+      if (type === 'payment') {
+        res = await window.api.integrations.testPayment(cfg.payment_gateway, cfg.payment_key, cfg.payment_secret)
+      } else if (type === 'shopify') {
+        res = await window.api.integrations.testShopify(cfg.shopify_store, cfg.shopify_token)
+      }
+    } catch (err) {
+      res = { success: false, message: err.message || 'IPC invocation failed.' }
+    }
+
+    setTestResult(s => ({ ...s, [type]: res.success ? 'success' : 'failed' }))
+    setTestMessage(s => ({ ...s, [type]: res.message || '' }))
     setTesting(s => ({ ...s, [type]: false }))
   }
 
@@ -56,7 +88,7 @@ export default function Integrations() {
         {children}
         {testResult[type] && (
           <div style={{ background: testResult[type]==='success' ? '#ecfdf5' : '#fef2f2', border: `1px solid ${testResult[type]==='success' ? '#bbf7d0' : '#fecaca'}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: testResult[type]==='success' ? '#059669' : '#dc2626' }}>
-            {testResult[type]==='success' ? '✔ Configuration looks valid.' : '✖ Missing required credentials.'}
+            {testResult[type]==='success' ? '✔ Connection successful! Configuration is valid.' : `✖ Connection failed: ${testMessage[type] || 'Invalid credentials.'}`}
           </div>
         )}
         <button style={{ ...C.btn2, justifyContent: 'center' }} onClick={() => testConnection(type)} disabled={testing[type]}>

@@ -2,6 +2,8 @@ const { ipcMain } = require('electron')
 const { getDB } = require('../db/database')
 const { v4: uuid } = require('uuid')
 const { enqueue } = require('./syncHelper')
+const { syncProduct } = require('../shopifySync')
+
 
 function nextInvoiceNo(db) {
   const row = db.prepare(`SELECT invoice_no FROM sales ORDER BY created_at DESC LIMIT 1`).get()
@@ -55,6 +57,11 @@ module.exports = function registerSalesHandlers() {
       enqueue(db, 'transactions', 'insert', txRow)
     })()
 
+    // Shopify sync trigger after transaction commits (non-blocking)
+    for (const item of items) {
+      syncProduct(item.product_id).catch(err => console.error('[Shopify Sale sync error]:', err))
+    }
+
     return { id, invoice_no, total, change_due }
   })
 
@@ -76,6 +83,8 @@ module.exports = function registerSalesHandlers() {
   ipcMain.handle('sales:return', (_, { sale_id, reason, refund_amount }) => {
     const db = getDB()
     const id = uuid()
+    const items = db.prepare(`SELECT * FROM sale_items WHERE sale_id = ?`).all(sale_id)
+
     db.transaction(() => {
       const retRow = { id, sale_id, reason: reason || null, refund_amount: refund_amount || 0 }
       db.prepare(`INSERT INTO returns (id, sale_id, reason, refund_amount) VALUES (@id, @sale_id, @reason, @refund_amount)`).run(retRow)
@@ -83,7 +92,6 @@ module.exports = function registerSalesHandlers() {
       db.prepare(`UPDATE sales SET status='returned' WHERE id = ?`).run(sale_id)
       enqueue(db, 'sales', 'update', { id: sale_id, status: 'returned' })
 
-      const items = db.prepare(`SELECT * FROM sale_items WHERE sale_id = ?`).all(sale_id)
       for (const item of items) {
         db.prepare(`UPDATE products SET quantity = quantity + ? WHERE id = ?`).run(item.qty, item.product_id)
         const logRow = { id: uuid(), product_id: item.product_id, type: 'in', quantity: item.qty, note: `Return ${sale_id}` }
@@ -97,6 +105,12 @@ module.exports = function registerSalesHandlers() {
         enqueue(db, 'transactions', 'insert', txRow)
       }
     })()
+
+    // Shopify sync trigger after transaction commits (non-blocking)
+    for (const item of items) {
+      syncProduct(item.product_id).catch(err => console.error('[Shopify Return sync error]:', err))
+    }
+
     return { id, success: true }
   })
 }

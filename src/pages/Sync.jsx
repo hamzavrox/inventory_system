@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { RefreshCw, HardDrive, FolderOpen, Upload, CheckCircle, XCircle, Clock, AlertTriangle, Database } from 'lucide-react'
 import { C } from '../utils/pageStyles'
 
@@ -17,8 +17,8 @@ export default function Sync() {
   const [backupMsg,  setBackupMsg]  = useState('')
   const [restoring,  setRestoring]  = useState(false)
   const [restoreMsg, setRestoreMsg] = useState('')
-  const [autoEnabled, setAutoEnabled] = useState(() => JSON.parse(localStorage.getItem(AUTO_KEY) || '{"enabled":false}').enabled)
-  const [autoTime,    setAutoTime]    = useState(() => JSON.parse(localStorage.getItem(AUTO_KEY) || '{"time":"02:00"}').time || '02:00')
+  const [autoEnabled, setAutoEnabled] = useState(() => JSON.parse(localStorage.getItem(AUTO_KEY) || '{"enabled":true}').enabled)
+  const [autoTime,    setAutoTime]    = useState(() => JSON.parse(localStorage.getItem(AUTO_KEY) || '{"time":"17:00"}').time || '17:00')
   const [autoMsg,     setAutoMsg]     = useState('')
   const [apiUrl,      setApiUrl]      = useState(() => JSON.parse(localStorage.getItem(SERVER_KEY) || '{"url":""}').url || '')
   const [apiToken,    setApiToken]    = useState(() => JSON.parse(localStorage.getItem(SERVER_KEY) || '{"token":""}').token || '')

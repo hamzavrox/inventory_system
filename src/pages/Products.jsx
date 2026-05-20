@@ -1,5 +1,5 @@
-﻿import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, Search, Layers, AlertTriangle, X, Check, ChevronDown, ChevronRight } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Plus, Pencil, Trash2, Search, Layers, AlertTriangle, X, Check, ChevronDown, ChevronRight, Cloud } from 'lucide-react'
 import Modal from '../components/Modal'
 import { FormField, Input, Select, Btn } from '../components/FormField'
 import { C, fmt } from '../utils/pageStyles'
@@ -27,6 +27,7 @@ export default function Products() {
   const [saving,     setSaving]     = useState(false)
   const [expanded,   setExpanded]   = useState({})
   const [toast,      setToast]      = useState({ msg: '', type: 'success' })
+  const [shopifySyncing, setShopifySyncing] = useState({})
   const showToast = (msg, type = 'success') => setToast({ msg, type })
 
   const load = () => Promise.all([
@@ -77,6 +78,23 @@ export default function Products() {
 
   const handleDelete = async (id) => {
     if (confirm('Delete this product?')) { await window.api.products.delete(id); load(); showToast('Product deleted', 'error') }
+  }
+
+  const handleShopifySync = async (p) => {
+    setShopifySyncing(s => ({ ...s, [p.id]: true }))
+    try {
+      const res = await window.api.shopify.syncProduct(p.id)
+      const errors = (res.logs || []).filter(l => l.level === 'error')
+      if (errors.length > 0) {
+        showToast(`Shopify sync error: ${errors[0].msg}`, 'error')
+      } else {
+        showToast(`"${p.name}" synced to Shopify ✓`, 'success')
+      }
+    } catch (e) {
+      showToast('Shopify sync failed: ' + e.message, 'error')
+    } finally {
+      setShopifySyncing(s => ({ ...s, [p.id]: false }))
+    }
   }
 
   const openVariants = async (p) => {
@@ -169,6 +187,14 @@ export default function Products() {
                     <td style={{ ...C.td(), textAlign: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                         <button style={C.iBtn} onClick={() => openVariants(p)} title="Variants"><Layers size={14} color="#94a3b8" /></button>
+                        <button
+                          style={{ ...C.iBtn, opacity: shopifySyncing[p.id] ? 0.5 : 1 }}
+                          onClick={() => handleShopifySync(p)}
+                          disabled={shopifySyncing[p.id]}
+                          title="Sync to Shopify"
+                        >
+                          <Cloud size={14} color={shopifySyncing[p.id] ? '#94a3b8' : '#00aaff'} />
+                        </button>
                         {can('products','edit')   && <button style={C.iBtn} onClick={() => handleEdit(p)}><Pencil size={14} color="#00deab" /></button>}
                         {can('products','delete') && <button style={C.iBtn} onClick={() => handleDelete(p.id)}><Trash2 size={14} color="#ef4444" /></button>}
                       </div>

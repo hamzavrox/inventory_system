@@ -2,6 +2,8 @@ const { ipcMain } = require('electron')
 const { getDB } = require('../db/database')
 const { v4: uuid } = require('uuid')
 const { enqueue, dequeue } = require('./syncHelper')
+const { syncProduct, deleteProduct } = require('../shopifySync')
+
 
 module.exports = function registerProductHandlers() {
   // â”€â”€ Brands â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -65,6 +67,10 @@ module.exports = function registerProductHandlers() {
       VALUES (@id, @name, @sku, @barcode, @brand_id, @category_id, @price, @cost_price, @quantity, @unit, @low_stock_threshold)
     `).run(row)
     enqueue(db, 'products', 'insert', row)
+    
+    // Shopify sync trigger (non-blocking)
+    syncProduct(id).catch(err => console.error('[Shopify Add sync error]:', err))
+
     return { ...row }
   })
 
@@ -80,15 +86,26 @@ module.exports = function registerProductHandlers() {
       WHERE id=@id
     `).run(row)
     enqueue(db, 'products', 'update', row)
+
+    // Shopify sync trigger (non-blocking)
+    syncProduct(id).catch(err => console.error('[Shopify Update sync error]:', err))
+
     return row
   })
 
   ipcMain.handle('products:delete', (_, id) => {
     const db = getDB()
+    const product = db.prepare(`SELECT shopify_product_id FROM products WHERE id=?`).get(id)
     const pendingInsert = db.prepare(`SELECT id FROM sync_queue WHERE table_name='products' AND record_id=? AND operation='insert' AND status IN ('pending', 'failed')`).get(id)
     db.prepare(`DELETE FROM products WHERE id=?`).run(id)
     if (pendingInsert) dequeue(db, 'products', id)
     else enqueue(db, 'products', 'delete', { id })
+
+    // Shopify sync delete trigger (non-blocking)
+    if (product && product.shopify_product_id) {
+      deleteProduct(product.shopify_product_id).catch(err => console.error('[Shopify Delete sync error]:', err))
+    }
+
     return { success: true }
   })
 

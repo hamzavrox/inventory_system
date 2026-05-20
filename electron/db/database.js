@@ -1,4 +1,4 @@
-﻿const Database = require('better-sqlite3')
+const Database = require('better-sqlite3')
 const path = require('path')
 const { app } = require('electron')
 const { schema, SCHEMA_VERSION } = require('./migrations')
@@ -33,15 +33,18 @@ function _migrateColumns() {
     }
   }
 
-  // Products table â€” columns added after initial release
+  // Products table — columns added after initial release
   addCol('products', 'barcode',             'TEXT')
   addCol('products', 'brand_id',            'TEXT')
   addCol('products', 'category_id',         'TEXT')
   addCol('products', 'cost_price',          'REAL DEFAULT 0')
   addCol('products', 'unit',                "TEXT DEFAULT 'pcs'")
   addCol('products', 'low_stock_threshold', 'INTEGER DEFAULT 10')
+  addCol('products', 'shopify_product_id',   'TEXT')
+  addCol('products', 'shopify_variant_id',   'TEXT')
+  addCol('products', 'shopify_inventory_item_id', 'TEXT')
 
-  // Stock log â€” batch tracking columns
+  // Stock log — batch tracking columns
   addCol('stock_log', 'batch_no',    'TEXT')
   addCol('stock_log', 'expiry_date', 'TEXT')
   addCol('stock_log', 'branch_id',   'TEXT')
