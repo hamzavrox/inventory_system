@@ -168,6 +168,11 @@ function handleProductCreate(shopifyProduct) {
       console.log(`[Shopify Webhook]: SKU ${variant.sku} already exists locally — mapping to existing product`)
       db.prepare(`UPDATE products SET shopify_product_id=?, shopify_variant_id=?, shopify_inventory_item_id=?, synced=1, updated_at=datetime('now') WHERE id=?`)
         .run(String(shopifyProduct.id), variant ? String(variant.id) : null, variant ? String(variant.inventory_item_id) : null, bySku.id)
+      
+      const { enqueue } = require('./ipc/syncHelper')
+      const updatedProduct = db.prepare(`SELECT * FROM products WHERE id = ?`).get(bySku.id)
+      enqueue(db, 'products', 'update', updatedProduct)
+
       logWebhookEvent({ source: 'shopify_to_ims', topic: 'products/create', shopifyId: String(shopifyProduct.id), imsId: bySku.id, status: 'skipped', message: `Mapped to existing product by SKU: ${variant.sku}` })
       notifyRenderer('shopify:webhook:event', { topic: 'products/create', action: 'mapped', productId: bySku.id })
       return { success: true, productId: bySku.id, mapped: true }
@@ -201,6 +206,9 @@ function handleProductCreate(shopifyProduct) {
     VALUES (@id, @name, @sku, @barcode, @brand_id, @category_id, @price, @cost_price, @quantity, @unit,
       @low_stock_threshold, @shopify_product_id, @shopify_variant_id, @shopify_inventory_item_id, @synced, @updated_at, @deleted_at)
   `).run(product)
+
+  const { enqueue } = require('./ipc/syncHelper')
+  enqueue(db, 'products', 'insert', product)
 
   logWebhookEvent({ source: 'shopify_to_ims', topic: 'products/create', shopifyId: String(shopifyProduct.id), imsId: productId, status: 'success', message: `Created product "${product.name}"` })
   notifyRenderer('shopify:webhook:event', { topic: 'products/create', action: 'created', productId })
@@ -241,6 +249,10 @@ function handleProductUpdate(shopifyProduct) {
     String(shopifyProduct.id)
   )
 
+  const { enqueue } = require('./ipc/syncHelper')
+  const updatedProduct = db.prepare(`SELECT * FROM products WHERE id = ?`).get(existing.id)
+  enqueue(db, 'products', 'update', updatedProduct)
+
   logWebhookEvent({ source: 'shopify_to_ims', topic: 'products/update', shopifyId: String(shopifyProduct.id), imsId: existing.id, status: 'success', message: `Updated product "${shopifyProduct.title}"` })
   notifyRenderer('shopify:webhook:event', { topic: 'products/update', action: 'updated', productId: existing.id })
   console.log(`[Shopify Webhook]: Updated product "${shopifyProduct.title}" (Shopify ID: ${shopifyProduct.id})`)
@@ -249,6 +261,7 @@ function handleProductUpdate(shopifyProduct) {
 
 // ── Handle: Product Delete from Shopify ──────────────────────────────────────
 function handleProductDelete(shopifyProductId) {
+  const { enqueue, dequeue } = require('./ipc/syncHelper')
   const db = getDB()
 
   const existing = db.prepare(`SELECT id, name FROM products WHERE shopify_product_id = ?`).get(String(shopifyProductId))
@@ -258,12 +271,22 @@ function handleProductDelete(shopifyProductId) {
     return { success: true, message: 'Product not found' }
   }
 
-  // Soft delete
-  db.prepare(`UPDATE products SET deleted_at = datetime('now'), synced = 1 WHERE shopify_product_id = ?`).run(String(shopifyProductId))
+  // Check if there's a pending insert in sync queue
+  const pendingInsert = db.prepare(`SELECT id FROM sync_queue WHERE table_name = 'products' AND record_id = ? AND operation = 'insert' AND status IN ('pending', 'failed')`).get(existing.id)
 
-  logWebhookEvent({ source: 'shopify_to_ims', topic: 'products/delete', shopifyId: String(shopifyProductId), imsId: existing.id, status: 'success', message: `Soft-deleted product "${existing.name}"` })
+  // Hard delete locally
+  db.prepare(`DELETE FROM products WHERE shopify_product_id = ?`).run(String(shopifyProductId))
+
+  // Sync delete to MySQL backend
+  if (pendingInsert) {
+    dequeue(db, 'products', existing.id)
+  } else {
+    enqueue(db, 'products', 'delete', { id: existing.id })
+  }
+
+  logWebhookEvent({ source: 'shopify_to_ims', topic: 'products/delete', shopifyId: String(shopifyProductId), imsId: existing.id, status: 'success', message: `Deleted product "${existing.name}"` })
   notifyRenderer('shopify:webhook:event', { topic: 'products/delete', action: 'deleted', productId: existing.id })
-  console.log(`[Shopify Webhook]: Soft-deleted product "${existing.name}" (Shopify ID: ${shopifyProductId})`)
+  console.log(`[Shopify Webhook]: Deleted product "${existing.name}" (Shopify ID: ${shopifyProductId})`)
   return { success: true, productId: existing.id }
 }
 
@@ -284,14 +307,30 @@ function handleInventoryUpdate(inventoryLevel) {
   db.prepare(`UPDATE products SET quantity = ?, synced = 1, updated_at = datetime('now') WHERE shopify_inventory_item_id = ?`)
     .run(newQty, String(inventoryLevel.inventory_item_id))
 
+  const { enqueue } = require('./ipc/syncHelper')
+
   // Write stock log entry if quantity actually changed
   if (newQty !== oldQty) {
     const diff = newQty - oldQty
+    const stockLogId = uuid()
     db.prepare(`
       INSERT INTO stock_log (id, product_id, type, quantity, note, created_at, synced)
       VALUES (?, ?, ?, ?, ?, datetime('now'), 1)
-    `).run(uuid(), existing.id, diff > 0 ? 'in' : 'out', Math.abs(diff), 'Synced from Shopify')
+    `).run(stockLogId, existing.id, diff > 0 ? 'in' : 'out', Math.abs(diff), 'Synced from Shopify')
+
+    enqueue(db, 'stock_log', 'insert', {
+      id: stockLogId,
+      product_id: existing.id,
+      type: diff > 0 ? 'in' : 'out',
+      quantity: Math.abs(diff),
+      note: 'Synced from Shopify',
+      created_at: new Date().toISOString(),
+      synced: 1
+    })
   }
+
+  const updatedProduct = db.prepare(`SELECT * FROM products WHERE id = ?`).get(existing.id)
+  enqueue(db, 'products', 'update', updatedProduct)
 
   logWebhookEvent({ source: 'shopify_to_ims', topic: 'inventory_levels/update', shopifyId: String(inventoryLevel.inventory_item_id), imsId: existing.id, status: 'success', message: `Inventory updated: ${oldQty} → ${newQty}` })
   notifyRenderer('shopify:webhook:event', { topic: 'inventory_levels/update', action: 'inventory_updated', productId: existing.id, oldQty, newQty })

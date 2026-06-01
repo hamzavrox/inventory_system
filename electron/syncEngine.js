@@ -137,11 +137,22 @@ async function pullSync(apiUrl, authToken) {
         if (!cols.length) continue
         const vals    = cols.map(c => row[c] instanceof Date ? row[c].toISOString() : row[c])
         const setCols = cols.filter(c => c !== 'id').map(c => `${c}=excluded.${c}`).join(', ')
-        
-        db.prepare(`
-          INSERT INTO ${table} (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})
-          ON CONFLICT(id) DO UPDATE SET ${setCols}
-        `).run(...vals)
+
+        // Use INSERT OR REPLACE so that rows with secondary UNIQUE conflicts
+        // (e.g. sales.invoice_no) are cleanly replaced rather than silently dropped
+        try {
+          db.prepare(`
+            INSERT INTO ${table} (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})
+            ON CONFLICT(id) DO UPDATE SET ${setCols}
+          `).run(...vals)
+        } catch (uniqueErr) {
+          if (uniqueErr.message && uniqueErr.message.includes('UNIQUE constraint failed')) {
+            // Secondary unique conflict — replace the conflicting row entirely
+            db.prepare(`INSERT OR REPLACE INTO ${table} (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})`).run(...vals)
+          } else {
+            throw uniqueErr
+          }
+        }
         pulled++
       } catch (err) { console.error('Pull Error on', table, err.message) }
     }
@@ -198,11 +209,19 @@ async function pullAll(apiUrl, authToken) {
         if (!cols.length) continue
         const vals    = cols.map(c => row[c] instanceof Date ? row[c].toISOString() : row[c])
         const setCols = cols.filter(c => c !== 'id').map(c => `${c}=excluded.${c}`).join(', ')
-        
-        db.prepare(`
-          INSERT INTO ${table} (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})
-          ON CONFLICT(id) DO UPDATE SET ${setCols}
-        `).run(...vals)
+
+        try {
+          db.prepare(`
+            INSERT INTO ${table} (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})
+            ON CONFLICT(id) DO UPDATE SET ${setCols}
+          `).run(...vals)
+        } catch (uniqueErr) {
+          if (uniqueErr.message && uniqueErr.message.includes('UNIQUE constraint failed')) {
+            db.prepare(`INSERT OR REPLACE INTO ${table} (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})`).run(...vals)
+          } else {
+            throw uniqueErr
+          }
+        }
         pulled++
       } catch (err) { console.error('PullAll Error on', table, err.message) }
     }

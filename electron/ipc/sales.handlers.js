@@ -6,64 +6,94 @@ const { syncProduct } = require('../shopifySync')
 
 
 function nextInvoiceNo(db) {
-  const row = db.prepare(`SELECT invoice_no FROM sales ORDER BY rowid DESC LIMIT 1`).get()
-  if (!row) return 'INV-0001'
-  const num = parseInt(row.invoice_no.split('-')[1] || '0') + 1
+  // Use MAX on the numeric suffix to avoid gaps/duplicates from deletions or rollbacks
+  const row = db.prepare(`
+    SELECT MAX(CAST(SUBSTR(invoice_no, 5) AS INTEGER)) AS max_num
+    FROM sales
+    WHERE invoice_no LIKE 'INV-%'
+  `).get()
+  const num = (row?.max_num || 0) + 1
   return `INV-${String(num).padStart(4, '0')}`
 }
 
 module.exports = function registerSalesHandlers() {
   ipcMain.handle('sales:create', (_, { customer_id, branch_id, items, discount, tax, paid, payment_method, note }) => {
     const db = getDB()
-    const id = uuid()
-    const invoice_no = nextInvoiceNo(db)
 
-    const subtotal  = items.reduce((s, i) => s + i.total, 0)
-    const total     = subtotal - (discount || 0) + (tax || 0)
+    const subtotal   = items.reduce((s, i) => s + i.total, 0)
+    const total      = subtotal - (discount || 0) + (tax || 0)
     const change_due = (paid || 0) - total
 
-    const saleRow = { id, invoice_no, customer_id: customer_id || null, branch_id: branch_id || null, subtotal, discount: discount || 0, tax: tax || 0, total, paid: paid || 0, change_due, payment_method: payment_method || 'cash', note: note || null }
+    // Retry loop — handles double-click race or any UNIQUE collision on invoice_no
+    let invoice_no = null
+    let id = null
+    let attempts = 0
 
-    db.transaction(() => {
-      db.prepare(`
-        INSERT INTO sales (id, invoice_no, customer_id, branch_id, subtotal, discount, tax, total, paid, change_due, payment_method, note)
-        VALUES (@id, @invoice_no, @customer_id, @branch_id, @subtotal, @discount, @tax, @total, @paid, @change_due, @payment_method, @note)
-      `).run(saleRow)
-      console.log('[Sales] Created sale:', invoice_no, 'Items:', items.length)
-      enqueue(db, 'sales', 'insert', saleRow)
+    while (attempts < 10) {
+      attempts++
+      id = uuid()
+      invoice_no = nextInvoiceNo(db)
 
-      for (const item of items) {
-        const itemRow = { id: uuid(), sale_id: id, product_id: item.product_id, variant_id: item.variant_id || null, name: item.name, qty: item.qty, price: item.price, discount: item.discount || 0, total: item.total }
-        db.prepare(`
-          INSERT INTO sale_items (id, sale_id, product_id, variant_id, name, qty, price, discount, total)
-          VALUES (@id, @sale_id, @product_id, @variant_id, @name, @qty, @price, @discount, @total)
-        `).run(itemRow)
-        enqueue(db, 'sale_items', 'insert', itemRow)
+      const saleRow = { id, invoice_no, customer_id: customer_id || null, branch_id: branch_id || null, subtotal, discount: discount || 0, tax: tax || 0, total, paid: paid || 0, change_due, payment_method: payment_method || 'cash', note: note || null }
 
-        db.prepare(`UPDATE products SET quantity = quantity - ?, synced=0 WHERE id = ?`).run(item.qty, item.product_id)
-        const updatedProduct = db.prepare(`SELECT id, quantity FROM products WHERE id = ?`).get(item.product_id)
-        console.log('[Sales] Stock update - product_id:', item.product_id, 'qty sold:', item.qty, 'new qty:', updatedProduct?.quantity)
-        if (item.variant_id) {
-          db.prepare(`UPDATE product_variants SET quantity = quantity - ? WHERE id = ?`).run(item.qty, item.variant_id)
-          const updatedVariant = db.prepare(`SELECT * FROM product_variants WHERE id = ?`).get(item.variant_id)
-          if (updatedVariant) enqueue(db, 'product_variants', 'update', updatedVariant)
+      try {
+        db.transaction(() => {
+          db.prepare(`
+            INSERT INTO sales (id, invoice_no, customer_id, branch_id, subtotal, discount, tax, total, paid, change_due, payment_method, note)
+            VALUES (@id, @invoice_no, @customer_id, @branch_id, @subtotal, @discount, @tax, @total, @paid, @change_due, @payment_method, @note)
+          `).run(saleRow)
+          console.log('[Sales] Created sale:', invoice_no, 'Items:', items.length)
+          enqueue(db, 'sales', 'insert', saleRow)
+
+          for (const item of items) {
+            const itemRow = { id: uuid(), sale_id: id, product_id: item.product_id, variant_id: item.variant_id || null, name: item.name, qty: item.qty, price: item.price, discount: item.discount || 0, total: item.total }
+            db.prepare(`
+              INSERT INTO sale_items (id, sale_id, product_id, variant_id, name, qty, price, discount, total)
+              VALUES (@id, @sale_id, @product_id, @variant_id, @name, @qty, @price, @discount, @total)
+            `).run(itemRow)
+            enqueue(db, 'sale_items', 'insert', itemRow)
+
+            db.prepare(`UPDATE products SET quantity = quantity - ?, synced=0 WHERE id = ?`).run(item.qty, item.product_id)
+            const updatedProduct = db.prepare(`SELECT id, quantity FROM products WHERE id = ?`).get(item.product_id)
+            console.log('[Sales] Stock update - product_id:', item.product_id, 'qty sold:', item.qty, 'new qty:', updatedProduct?.quantity)
+            if (item.variant_id) {
+              db.prepare(`UPDATE product_variants SET quantity = quantity - ? WHERE id = ?`).run(item.qty, item.variant_id)
+              const updatedVariant = db.prepare(`SELECT * FROM product_variants WHERE id = ?`).get(item.variant_id)
+              if (updatedVariant) enqueue(db, 'product_variants', 'update', updatedVariant)
+            }
+            const logRow = { id: uuid(), product_id: item.product_id, type: 'out', quantity: item.qty, note: `Sale ${invoice_no}` }
+            db.prepare(`INSERT INTO stock_log (id, product_id, type, quantity, note) VALUES (@id, @product_id, @type, @quantity, @note)`).run(logRow)
+            enqueue(db, 'stock_log', 'insert', logRow)
+          }
+
+          if (customer_id) {
+            db.prepare(`UPDATE customers SET balance = balance - ? WHERE id = ?`).run(total - (paid || 0), customer_id)
+            const ledgerRow = { id: uuid(), customer_id, type: 'sale', amount: total, note: invoice_no, ref_id: id }
+            db.prepare(`INSERT INTO customer_ledger (id, customer_id, type, amount, note, ref_id) VALUES (@id, @customer_id, @type, @amount, @note, @ref_id)`).run(ledgerRow)
+            enqueue(db, 'customer_ledger', 'insert', ledgerRow)
+          }
+
+          const txRow = { id: uuid(), type: 'income', category: 'sale', amount: total, note: invoice_no, ref_id: id }
+          db.prepare(`INSERT INTO transactions (id, type, category, amount, note, ref_id) VALUES (@id, @type, @category, @amount, @note, @ref_id)`).run(txRow)
+          enqueue(db, 'transactions', 'insert', txRow)
+        })()
+
+        // Transaction succeeded — break out of retry loop
+        break
+      } catch (err) {
+        if (err.message && err.message.includes('UNIQUE constraint failed: sales.invoice_no')) {
+          console.warn(`[Sales] invoice_no collision on ${invoice_no}, retrying (attempt ${attempts})...`)
+          // Loop continues with a fresh uuid + new nextInvoiceNo call
+          continue
         }
-        const logRow = { id: uuid(), product_id: item.product_id, type: 'out', quantity: item.qty, note: `Sale ${invoice_no}` }
-        db.prepare(`INSERT INTO stock_log (id, product_id, type, quantity, note) VALUES (@id, @product_id, @type, @quantity, @note)`).run(logRow)
-        enqueue(db, 'stock_log', 'insert', logRow)
+        // Any other error — rethrow
+        throw err
       }
+    }
 
-      if (customer_id) {
-        db.prepare(`UPDATE customers SET balance = balance - ? WHERE id = ?`).run(total - (paid || 0), customer_id)
-        const ledgerRow = { id: uuid(), customer_id, type: 'sale', amount: total, note: invoice_no, ref_id: id }
-        db.prepare(`INSERT INTO customer_ledger (id, customer_id, type, amount, note, ref_id) VALUES (@id, @customer_id, @type, @amount, @note, @ref_id)`).run(ledgerRow)
-        enqueue(db, 'customer_ledger', 'insert', ledgerRow)
-      }
-
-      const txRow = { id: uuid(), type: 'income', category: 'sale', amount: total, note: invoice_no, ref_id: id }
-      db.prepare(`INSERT INTO transactions (id, type, category, amount, note, ref_id) VALUES (@id, @type, @category, @amount, @note, @ref_id)`).run(txRow)
-      enqueue(db, 'transactions', 'insert', txRow)
-    })()
+    if (attempts >= 10) {
+      throw new Error('Could not generate a unique invoice number after 10 attempts.')
+    }
 
     // Shopify sync trigger after transaction commits (non-blocking)
     for (const item of items) {
