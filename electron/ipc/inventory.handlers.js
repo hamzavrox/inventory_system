@@ -2,19 +2,41 @@ const { ipcMain } = require('electron')
 const { getDB } = require('../db/database')
 const { v4: uuid } = require('uuid')
 const { enqueue } = require('./syncHelper')
+const { syncProduct } = require('../shopifySync')
 
 module.exports = function registerInventoryHandlers() {
   ipcMain.handle('inventory:adjustStock', (_, { productId, type, qty, note, batch_no, expiry_date, branch_id }) => {
     const db   = getDB()
     const sign = type === 'out' ? -1 : 1
     db.transaction(() => {
-      db.prepare(`UPDATE products SET quantity = quantity + ?, synced=0 WHERE id = ?`).run(sign * qty, productId)
+      db.prepare(`UPDATE products SET quantity = quantity + ?, synced=0, updated_at=datetime('now') WHERE id = ?`).run(sign * qty, productId)
+      
+      // Fetch the COMPLETE updated product record - use SELECT * to get ALL columns including dynamically added ones
       const updatedProduct = db.prepare(`SELECT * FROM products WHERE id = ?`).get(productId)
-      enqueue(db, 'products', 'update', updatedProduct)
+      
+      if (updatedProduct) {
+        // Ensure all fields have proper defaults to match what products:update sends
+        const normalizedProduct = {
+          ...updatedProduct,
+          category: updatedProduct.category || updatedProduct.category_id || '',
+          brand_id: updatedProduct.brand_id || null,
+          category_id: updatedProduct.category_id || null,
+          barcode: updatedProduct.barcode || null,
+          unit: updatedProduct.unit || 'pcs',
+          low_stock_threshold: updatedProduct.low_stock_threshold || 10,
+          cost_price: updatedProduct.cost_price || 0
+        }
+        enqueue(db, 'products', 'update', normalizedProduct)
+      }
+      
       const logRow = { id: uuid(), product_id: productId, type, quantity: qty, batch_no: batch_no || null, expiry_date: expiry_date || null, note: note || null, branch_id: branch_id || null }
       db.prepare(`INSERT INTO stock_log (id, product_id, type, quantity, batch_no, expiry_date, note, branch_id) VALUES (@id, @product_id, @type, @quantity, @batch_no, @expiry_date, @note, @branch_id)`).run(logRow)
       enqueue(db, 'stock_log', 'insert', logRow)
     })()
+    
+    // Shopify sync trigger (non-blocking)
+    syncProduct(productId).catch(err => console.error('[Shopify Stock Adjust sync error]:', err))
+    
     return { success: true }
   })
 

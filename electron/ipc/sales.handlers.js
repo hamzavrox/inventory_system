@@ -6,7 +6,7 @@ const { syncProduct } = require('../shopifySync')
 
 
 function nextInvoiceNo(db) {
-  const row = db.prepare(`SELECT invoice_no FROM sales ORDER BY created_at DESC LIMIT 1`).get()
+  const row = db.prepare(`SELECT invoice_no FROM sales ORDER BY rowid DESC LIMIT 1`).get()
   if (!row) return 'INV-0001'
   const num = parseInt(row.invoice_no.split('-')[1] || '0') + 1
   return `INV-${String(num).padStart(4, '0')}`
@@ -29,6 +29,7 @@ module.exports = function registerSalesHandlers() {
         INSERT INTO sales (id, invoice_no, customer_id, branch_id, subtotal, discount, tax, total, paid, change_due, payment_method, note)
         VALUES (@id, @invoice_no, @customer_id, @branch_id, @subtotal, @discount, @tax, @total, @paid, @change_due, @payment_method, @note)
       `).run(saleRow)
+      console.log('[Sales] Created sale:', invoice_no, 'Items:', items.length)
       enqueue(db, 'sales', 'insert', saleRow)
 
       for (const item of items) {
@@ -40,6 +41,13 @@ module.exports = function registerSalesHandlers() {
         enqueue(db, 'sale_items', 'insert', itemRow)
 
         db.prepare(`UPDATE products SET quantity = quantity - ?, synced=0 WHERE id = ?`).run(item.qty, item.product_id)
+        const updatedProduct = db.prepare(`SELECT id, quantity FROM products WHERE id = ?`).get(item.product_id)
+        console.log('[Sales] Stock update - product_id:', item.product_id, 'qty sold:', item.qty, 'new qty:', updatedProduct?.quantity)
+        if (item.variant_id) {
+          db.prepare(`UPDATE product_variants SET quantity = quantity - ? WHERE id = ?`).run(item.qty, item.variant_id)
+          const updatedVariant = db.prepare(`SELECT * FROM product_variants WHERE id = ?`).get(item.variant_id)
+          if (updatedVariant) enqueue(db, 'product_variants', 'update', updatedVariant)
+        }
         const logRow = { id: uuid(), product_id: item.product_id, type: 'out', quantity: item.qty, note: `Sale ${invoice_no}` }
         db.prepare(`INSERT INTO stock_log (id, product_id, type, quantity, note) VALUES (@id, @product_id, @type, @quantity, @note)`).run(logRow)
         enqueue(db, 'stock_log', 'insert', logRow)
@@ -94,6 +102,11 @@ module.exports = function registerSalesHandlers() {
 
       for (const item of items) {
         db.prepare(`UPDATE products SET quantity = quantity + ? WHERE id = ?`).run(item.qty, item.product_id)
+        if (item.variant_id) {
+          db.prepare(`UPDATE product_variants SET quantity = quantity + ? WHERE id = ?`).run(item.qty, item.variant_id)
+          const updatedVariant = db.prepare(`SELECT * FROM product_variants WHERE id = ?`).get(item.variant_id)
+          if (updatedVariant) enqueue(db, 'product_variants', 'update', updatedVariant)
+        }
         const logRow = { id: uuid(), product_id: item.product_id, type: 'in', quantity: item.qty, note: `Return ${sale_id}` }
         db.prepare(`INSERT INTO stock_log (id, product_id, type, quantity, note) VALUES (@id, @product_id, @type, @quantity, @note)`).run(logRow)
         enqueue(db, 'stock_log', 'insert', logRow)

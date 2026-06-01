@@ -1,4 +1,4 @@
-﻿const SCHEMA_VERSION = 1
+const SCHEMA_VERSION = 1
 
 const schema = `
   -- â”€â”€â”€ CORE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -20,20 +20,23 @@ const schema = `
 
   -- â”€â”€â”€ PRODUCTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   CREATE TABLE IF NOT EXISTS products (
-    id          TEXT PRIMARY KEY,
-    name        TEXT NOT NULL,
-    sku         TEXT UNIQUE,
-    barcode     TEXT,
-    brand_id    TEXT,
-    category_id TEXT,
-    price       REAL DEFAULT 0,
-    cost_price  REAL DEFAULT 0,
-    quantity    INTEGER DEFAULT 0,
-    low_stock_threshold INTEGER DEFAULT 10,
-    unit        TEXT DEFAULT 'pcs',
-    synced      INTEGER DEFAULT 0,
-    updated_at  TEXT DEFAULT (datetime('now')),
-    deleted_at  TEXT
+    id                        TEXT PRIMARY KEY,
+    name                      TEXT NOT NULL,
+    sku                       TEXT UNIQUE,
+    barcode                   TEXT,
+    brand_id                  TEXT,
+    category_id               TEXT,
+    price                     REAL DEFAULT 0,
+    cost_price                REAL DEFAULT 0,
+    quantity                  INTEGER DEFAULT 0,
+    low_stock_threshold       INTEGER DEFAULT 10,
+    unit                      TEXT DEFAULT 'pcs',
+    synced                    INTEGER DEFAULT 0,
+    shopify_product_id        TEXT,
+    shopify_variant_id        TEXT,
+    shopify_inventory_item_id TEXT,
+    updated_at                TEXT DEFAULT (datetime('now')),
+    deleted_at                TEXT
   );
 
   CREATE TABLE IF NOT EXISTS product_variants (
@@ -213,13 +216,27 @@ const schema = `
     synced_at  TEXT
   );
 
-  -- â”€â”€â”€ BACKUPS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  -- ─── BACKUPS ───────────────────────────────────────────────
   CREATE TABLE IF NOT EXISTS backups (
     id         TEXT PRIMARY KEY,
     path       TEXT,
     type       TEXT DEFAULT 'local',      -- 'local' | 'gdrive'
     size_kb    INTEGER,
+    gdrive_file_id TEXT,
     created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- ─── SHOPIFY WEBHOOK AUDIT LOG ─────────────────────────────
+  -- Records every inbound Shopify webhook and every outbound IMS→Shopify push
+  CREATE TABLE IF NOT EXISTS shopify_webhook_log (
+    id            TEXT PRIMARY KEY,
+    source        TEXT NOT NULL,   -- 'shopify_to_ims' | 'ims_to_shopify'
+    topic         TEXT NOT NULL,   -- 'products/create' | 'products/update' | 'products/delete' | 'inventory_levels/update'
+    shopify_id    TEXT,            -- Shopify product/inventory item ID
+    ims_id        TEXT,            -- Local IMS product ID
+    status        TEXT NOT NULL,   -- 'success' | 'error' | 'skipped'
+    message       TEXT,            -- Human-readable result or error message
+    created_at    TEXT DEFAULT (datetime('now'))
   );
 `
 

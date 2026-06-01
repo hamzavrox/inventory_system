@@ -34,20 +34,37 @@ function _migrateColumns() {
   }
 
   // Products table — columns added after initial release
-  addCol('products', 'barcode',             'TEXT')
-  addCol('products', 'brand_id',            'TEXT')
-  addCol('products', 'category_id',         'TEXT')
-  addCol('products', 'cost_price',          'REAL DEFAULT 0')
-  addCol('products', 'unit',                "TEXT DEFAULT 'pcs'")
+  addCol('products', 'barcode', 'TEXT')
+  addCol('products', 'brand_id', 'TEXT')
+  addCol('products', 'category_id', 'TEXT')
+  addCol('products', 'cost_price', 'REAL DEFAULT 0')
+  addCol('products', 'unit', "TEXT DEFAULT 'pcs'")
   addCol('products', 'low_stock_threshold', 'INTEGER DEFAULT 10')
-  addCol('products', 'shopify_product_id',   'TEXT')
-  addCol('products', 'shopify_variant_id',   'TEXT')
+  addCol('products', 'shopify_product_id', 'TEXT')
+  addCol('products', 'shopify_variant_id', 'TEXT')
   addCol('products', 'shopify_inventory_item_id', 'TEXT')
 
+  // Shopify webhook audit log — create for existing DBs
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS shopify_webhook_log (
+      id            TEXT PRIMARY KEY,
+      source        TEXT NOT NULL,
+      topic         TEXT NOT NULL,
+      shopify_id    TEXT,
+      ims_id        TEXT,
+      status        TEXT NOT NULL,
+      message       TEXT,
+      created_at    TEXT DEFAULT (datetime('now'))
+    )
+  `).run()
+
   // Stock log — batch tracking columns
-  addCol('stock_log', 'batch_no',    'TEXT')
+  addCol('stock_log', 'batch_no', 'TEXT')
   addCol('stock_log', 'expiry_date', 'TEXT')
-  addCol('stock_log', 'branch_id',   'TEXT')
+  addCol('stock_log', 'branch_id', 'TEXT')
+
+  // Backups table — Google Drive integration
+  addCol('backups', 'gdrive_file_id', 'TEXT')
 }
 
 function _seedDefaults() {
@@ -73,7 +90,7 @@ function _seedDefaults() {
 function getDB() { return db }
 
 function reloadDB() {
-  if (db) { try { db.close() } catch {} }
+  if (db) { try { db.close() } catch { } }
   db = null
   initDB()
 }

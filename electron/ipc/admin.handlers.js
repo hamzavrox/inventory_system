@@ -2,7 +2,8 @@ const { ipcMain, app, dialog, BrowserWindow } = require('electron')
 const { getDB, reloadDB } = require('../db/database')
 const { v4: uuid } = require('uuid')
 const path = require('path')
-const fs   = require('fs')
+const fs = require('fs')
+const gdrive = require('../gdrive.service')
 
 module.exports = function registerAdminHandlers() {
 
@@ -171,17 +172,17 @@ module.exports = function registerAdminHandlers() {
 
   // â”€â”€ Backup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const CLOUD_DIRS = [
-    { p: path.join(require('os').homedir(), 'My Drive', 'FloriManager Backups'),              type: 'google_drive' },
-    { p: path.join(require('os').homedir(), 'OneDrive', 'FloriManager Backups'),              type: 'onedrive'     },
-    { p: path.join(require('os').homedir(), 'OneDrive - Personal', 'FloriManager Backups'),   type: 'onedrive'     },
+    { p: path.join(require('os').homedir(), 'My Drive', 'FloriManager Backups'), type: 'google_drive' },
+    { p: path.join(require('os').homedir(), 'OneDrive', 'FloriManager Backups'), type: 'onedrive' },
+    { p: path.join(require('os').homedir(), 'OneDrive - Personal', 'FloriManager Backups'), type: 'onedrive' },
   ]
 
   function cleanOldBackups() {
-    const cutoff    = new Date(); cutoff.setDate(cutoff.getDate() - 1); cutoff.setHours(0,0,0,0)
-    const cutoffStr = cutoff.toISOString().replace('T',' ').slice(0,19)
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 1); cutoff.setHours(0, 0, 0, 0)
+    const cutoffStr = cutoff.toISOString().replace('T', ' ').slice(0, 19)
     const old = getDB().prepare(`SELECT * FROM backups WHERE created_at < ?`).all(cutoffStr)
     for (const b of old) {
-      try { if (b.path && fs.existsSync(b.path)) fs.unlinkSync(b.path) } catch {}
+      try { if (b.path && fs.existsSync(b.path)) fs.unlinkSync(b.path) } catch { }
       getDB().prepare(`DELETE FROM backups WHERE id = ?`).run(b.id)
     }
     const allDirs = [
@@ -194,23 +195,23 @@ module.exports = function registerAdminHandlers() {
         for (const file of fs.readdirSync(dir)) {
           if (!file.endsWith('.db')) continue
           const fp = path.join(dir, file)
-          if (fs.statSync(fp).mtimeMs < cutoff.getTime()) try { fs.unlinkSync(fp) } catch {}
+          if (fs.statSync(fp).mtimeMs < cutoff.getTime()) try { fs.unlinkSync(fp) } catch { }
         }
-      } catch {}
+      } catch { }
     }
   }
 
   ipcMain.handle('backup:create', async () => {
-    const db  = getDB()
+    const db = getDB()
     const now = new Date()
     const pad = n => String(n).padStart(2, '0')
-    const stamp    = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`
+    const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`
     const fileName = `inventory-${stamp}.db`
 
     cleanOldBackups()
 
     // 1. Save to local Documents using SQLite hot-backup API
-    const localDir  = path.join(app.getPath('documents'), 'FloriManager Backups')
+    const localDir = path.join(app.getPath('documents'), 'FloriManager Backups')
     if (!fs.existsSync(localDir)) fs.mkdirSync(localDir, { recursive: true })
     const localPath = path.join(localDir, fileName)
     await db.backup(localPath)
@@ -220,6 +221,9 @@ module.exports = function registerAdminHandlers() {
 
     // 2. Copy to OneDrive sync folder
     for (const { p, type } of CLOUD_DIRS) {
+      if (type === 'google_drive' && gdrive.isAuthenticated()) {
+        continue
+      }
       const parent = path.dirname(p)
       if (!fs.existsSync(parent)) continue
       try {
@@ -232,6 +236,17 @@ module.exports = function registerAdminHandlers() {
           break
         }
       } catch (e) { console.error('Cloud backup failed:', p, e.message) }
+    }
+
+    // 3. Upload to Google Drive via API if connected
+    try {
+      if (gdrive.isAuthenticated()) {
+        const fileId = await gdrive.uploadFile(localPath, fileName)
+        getDB().prepare(`INSERT INTO backups (id, path, type, size_kb, gdrive_file_id) VALUES (?, ?, 'google_drive', ?, ?)`)
+          .run(uuid(), localPath, size_kb, fileId)
+      }
+    } catch (e) {
+      console.error('Google Drive API backup failed:', e.message)
     }
 
     return { size_kb, path: localPath }
@@ -251,18 +266,18 @@ module.exports = function registerAdminHandlers() {
     if (!filePaths?.length) return { success: false, cancelled: true }
 
     const destPath = path.join(app.getPath('userData'), 'inventory.db')
-    const walPath  = destPath + '-wal'
-    const shmPath  = destPath + '-shm'
+    const walPath = destPath + '-wal'
+    const shmPath = destPath + '-shm'
 
     try {
       // 1. Flush + close DB
       const db = getDB()
-      try { db.pragma('wal_checkpoint(TRUNCATE)') } catch {}
-      try { db.close() } catch {}
+      try { db.pragma('wal_checkpoint(TRUNCATE)') } catch { }
+      try { db.close() } catch { }
 
       // 2. Remove WAL/SHM files
-      try { if (fs.existsSync(walPath)) fs.unlinkSync(walPath) } catch {}
-      try { if (fs.existsSync(shmPath)) fs.unlinkSync(shmPath) } catch {}
+      try { if (fs.existsSync(walPath)) fs.unlinkSync(walPath) } catch { }
+      try { if (fs.existsSync(shmPath)) fs.unlinkSync(shmPath) } catch { }
 
       // 3. Copy backup file over current DB
       fs.copyFileSync(filePaths[0], destPath)
@@ -272,7 +287,7 @@ module.exports = function registerAdminHandlers() {
 
       return { success: true }
     } catch (e) {
-      try { reloadDB() } catch {}
+      try { reloadDB() } catch { }
       return { success: false, error: e.message }
     }
   })
@@ -284,7 +299,46 @@ module.exports = function registerAdminHandlers() {
     return { success: true }
   })
 
-  // â”€â”€ Cleanup deleted records â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Google Drive ──────────────────────────────────────────────────────────
+
+  ipcMain.handle('gdrive:connect', async () => {
+    try {
+      const url = await gdrive.getAuthUrl()
+      await gdrive.startAuthServer(url)
+      const status = await gdrive.getStatus()
+      return status
+    } catch (e) {
+      return { error: e.message }
+    }
+  })
+
+  ipcMain.handle('gdrive:disconnect', async () => {
+    try {
+      await gdrive.disconnect()
+      return { success: true }
+    } catch (e) {
+      return { error: e.message }
+    }
+  })
+
+  ipcMain.handle('gdrive:status', async () => {
+    try {
+      return await gdrive.getStatus()
+    } catch (e) {
+      return { connected: false }
+    }
+  })
+
+  ipcMain.handle('gdrive:uploadBackup', async (e, backupPath) => {
+    try {
+      const fileId = await gdrive.uploadFile(backupPath, 'inventory.db')
+      return { success: true, fileId }
+    } catch (error) {
+      return { error: error.message }
+    }
+  })
+
+  // ── Cleanup deleted records ───────────────────────────────────────────────
   ipcMain.handle('db:cleanup', () => {
     const db = getDB()
     const p = db.prepare(`DELETE FROM products WHERE deleted_at IS NOT NULL`).run()
@@ -296,25 +350,25 @@ module.exports = function registerAdminHandlers() {
   ipcMain.handle('sync:fullSync', () => {
     const db = getDB()
     const tables = [
-      { name: 'branches',         query: `SELECT * FROM branches` },
-      { name: 'shops',            query: `SELECT * FROM shops` },
-      { name: 'roles',            query: `SELECT * FROM roles` },
-      { name: 'users',            query: `SELECT * FROM users` },
-      { name: 'brands',           query: `SELECT * FROM brands` },
-      { name: 'categories',       query: `SELECT * FROM categories` },
-      { name: 'products',         query: `SELECT * FROM products WHERE (deleted_at IS NULL OR deleted_at = '' OR deleted_at = 'null')` },
+      { name: 'branches', query: `SELECT * FROM branches` },
+      { name: 'shops', query: `SELECT * FROM shops` },
+      { name: 'roles', query: `SELECT * FROM roles` },
+      { name: 'users', query: `SELECT * FROM users` },
+      { name: 'brands', query: `SELECT * FROM brands` },
+      { name: 'categories', query: `SELECT * FROM categories` },
+      { name: 'products', query: `SELECT * FROM products WHERE (deleted_at IS NULL OR deleted_at = '' OR deleted_at = 'null')` },
       { name: 'product_variants', query: `SELECT * FROM product_variants` },
-      { name: 'customers',        query: `SELECT * FROM customers WHERE (deleted_at IS NULL OR deleted_at = '' OR deleted_at = 'null')` },
-      { name: 'discounts',        query: `SELECT * FROM discounts` },
-      { name: 'sales',            query: `SELECT * FROM sales` },
-      { name: 'sale_items',       query: `SELECT * FROM sale_items` },
-      { name: 'stock_log',        query: `SELECT * FROM stock_log` },
-      { name: 'stock_transfers',  query: `SELECT * FROM stock_transfers` },
-      { name: 'transactions',     query: `SELECT * FROM transactions` },
-      { name: 'customer_ledger',  query: `SELECT * FROM customer_ledger` },
-      { name: 'returns',          query: `SELECT * FROM returns` },
-      { name: 'sync_queue',        query: `SELECT * FROM sync_queue` },
-      { name: 'backups',           query: `SELECT * FROM backups` },
+      { name: 'customers', query: `SELECT * FROM customers WHERE (deleted_at IS NULL OR deleted_at = '' OR deleted_at = 'null')` },
+      { name: 'discounts', query: `SELECT * FROM discounts` },
+      { name: 'sales', query: `SELECT * FROM sales` },
+      { name: 'sale_items', query: `SELECT * FROM sale_items` },
+      { name: 'stock_log', query: `SELECT * FROM stock_log` },
+      { name: 'stock_transfers', query: `SELECT * FROM stock_transfers` },
+      { name: 'transactions', query: `SELECT * FROM transactions` },
+      { name: 'customer_ledger', query: `SELECT * FROM customer_ledger` },
+      { name: 'returns', query: `SELECT * FROM returns` },
+      { name: 'sync_queue', query: `SELECT * FROM sync_queue` },
+      { name: 'backups', query: `SELECT * FROM backups` },
     ]
     let total = 0
     for (const { name, query } of tables) {
@@ -328,7 +382,7 @@ module.exports = function registerAdminHandlers() {
             total++
           }
         }
-      } catch {}
+      } catch { }
     }
     return { total }
   })

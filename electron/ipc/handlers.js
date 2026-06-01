@@ -6,6 +6,7 @@ const registerAccountingHandlers= require('./accounting.handlers')
 const registerAdminHandlers     = require('./admin.handlers')
 const registerReportHandlers    = require('./reports.handlers')
 const registerIntegrationHandlers = require('./integration.handlers')
+const registerWebhookHandlers   = require('./webhook.handlers')
 
 function registerHandlers() {
   registerProductHandlers()
@@ -16,6 +17,7 @@ function registerHandlers() {
   registerAdminHandlers()
   registerReportHandlers()
   registerIntegrationHandlers()
+  registerWebhookHandlers()
 }
 
 module.exports = { registerHandlers }

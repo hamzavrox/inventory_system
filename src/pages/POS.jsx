@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import Modal from '../components/Modal'
 import { FormField, Input, Select, Btn } from '../components/FormField'
+import Toast from '../components/Toast'
 
 // â”€â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const fmt = (n) => Number(n || 0).toFixed(2)
@@ -63,30 +64,92 @@ function InvoicePrint({ sale, items, customer }) {
   )
 }
 
-// â”€â”€â”€ Cart Item Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function CartRow({ item, onQty, onRemove }) {
+// ——— Cart Item Row ————————————————————————————————————————————————————————————————————————————————
+function CartRow({ item, onQty, onRemove, onQtyDirect }) {
+  const [editing, setEditing] = useState(false)
+  const [inputVal, setInputVal] = useState(String(item.qty))
+
+  const commitEdit = () => {
+    const parsed = parseInt(inputVal, 10)
+    if (!isNaN(parsed) && parsed >= 1) {
+      // Pass raw value — setQtyDirect will clamp and show toast if it exceeds stock
+      onQtyDirect(item.cart_key, parsed)
+    } else if (!isNaN(parsed) && parsed < 1) {
+      onQtyDirect(item.cart_key, 1)
+    }
+    // Reset display; useEffect will sync once cart updates
+    setEditing(false)
+  }
+
+  const handleKeyDown = (e) => {
+    e.stopPropagation()
+    if (e.key === 'Enter') commitEdit()
+    if (e.key === 'Escape') { setInputVal(String(item.qty)); setEditing(false) }
+  }
+
+  // Keep inputVal in sync when not editing
+  useEffect(() => {
+    if (!editing) setInputVal(String(item.qty))
+  }, [item.qty, editing])
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 12, borderBottom: '1px solid #f1f5f9', marginBottom: 12 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 12, borderBottom: '1px solid #f1f5f9', marginBottom: 12 }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontSize: 13, fontWeight: 500, color: '#1e293b', margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
         <p style={{ fontSize: 12, color: '#94a3b8', margin: 0 }}>${fmt(item.price)} each</p>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+        {/* Minus */}
         <button onClick={() => onQty(item.cart_key, -1)}
-          style={{ ...styles.button, width: 24, height: 24, padding: 0, background: '#f1f5f9', color: '#475569' }}
+          style={{ ...styles.button, width: 26, height: 26, padding: 0, background: '#f1f5f9', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 6 }}
           onMouseEnter={e => e.currentTarget.style.background = '#e2e8f0'}
           onMouseLeave={e => e.currentTarget.style.background = '#f1f5f9'}>
-          <Minus size={12} style={{ margin: 'auto' }} />
+          <Minus size={11} />
         </button>
-        <span style={{ width: 24, textAlign: 'center', fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{item.qty}</span>
+        {/* Editable qty */}
+        {editing ? (
+          <input
+            autoFocus
+            type="number"
+            min={1}
+            max={item.stock_qty}
+            value={inputVal}
+            onChange={e => setInputVal(e.target.value)}
+            onBlur={commitEdit}
+            onKeyDown={handleKeyDown}
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: 40, height: 26, textAlign: 'center', fontSize: 13, fontWeight: 600,
+              border: '1.5px solid #00deab', borderRadius: 6, outline: 'none',
+              color: '#1e293b', background: '#f0fdf9', padding: '0 2px',
+              MozAppearance: 'textfield', WebkitAppearance: 'none', appearance: 'none'
+            }}
+          />
+        ) : (
+          <span
+            onClick={() => { setInputVal(String(item.qty)); setEditing(true) }}
+            title="Click to edit quantity"
+            style={{
+              width: 40, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 13, fontWeight: 600, color: '#1e293b',
+              background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6,
+              cursor: 'text', userSelect: 'none', transition: 'border-color 0.15s'
+            }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = '#00deab'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = '#e2e8f0'}
+          >
+            {item.qty}
+          </span>
+        )}
+        {/* Plus */}
         <button onClick={() => onQty(item.cart_key, 1)}
-          style={{ ...styles.button, width: 24, height: 24, padding: 0, background: '#f1f5f9', color: '#475569' }}
+          style={{ ...styles.button, width: 26, height: 26, padding: 0, background: '#f1f5f9', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 6 }}
           onMouseEnter={e => e.currentTarget.style.background = '#e2e8f0'}
           onMouseLeave={e => e.currentTarget.style.background = '#f1f5f9'}>
-          <Plus size={12} style={{ margin: 'auto' }} />
+          <Plus size={11} />
         </button>
       </div>
-      <span style={{ width: 60, textAlign: 'right', fontSize: 13, fontWeight: 600, color: '#00deab' }}>${fmt(item.total)}</span>
+      <span style={{ width: 56, textAlign: 'right', fontSize: 13, fontWeight: 600, color: '#00deab', flexShrink: 0 }}>${fmt(item.total)}</span>
       <button onClick={() => onRemove(item.cart_key)}
         style={{ ...styles.button, padding: '4px', color: '#dc2626', background: 'none', marginLeft: 4 }}
         onMouseEnter={e => e.currentTarget.style.color = '#991b1b'}
@@ -104,6 +167,8 @@ export default function POS() {
   const [customers, setCustomers] = useState([])
   const [search, setSearch] = useState('')
   const [cart, setCart] = useState([])
+  const [toast, setToast] = useState({ msg: '', type: 'success' })
+  const showToast = (msg, type = 'success') => setToast({ msg, type })
   const [customer, setCustomer] = useState(null)
   const [discount, setDiscount] = useState(0)
   const [taxPct, setTaxPct] = useState(0)
@@ -134,6 +199,7 @@ export default function POS() {
   const [processingPayment, setProcessingPayment] = useState(false)
   const [paymentStep, setPaymentStep] = useState('') // '', 'connecting', 'authorizing', 'success'
   const [gatewayName, setGatewayName] = useState('Stripe')
+  const [payError, setPayError] = useState('')
 
   useEffect(() => {
     if (payModal) {
@@ -236,12 +302,15 @@ export default function POS() {
 
   const buildInvoiceHtml = (sale, items) => {
     const rows = items.map(i => `<tr><td>${i.name}</td><td style="text-align:right">${i.qty}</td><td style="text-align:right">$${fmt(i.price)}</td><td style="text-align:right">$${fmt(i.total)}</td></tr>`).join('')
-    return `<!DOCTYPE html><html><head><style>body{font-family:monospace;font-size:12px;width:300px;margin:0 auto;padding:12px}hr{border:none;border-top:1px dashed #000;margin:6px 0}.center{text-align:center}table{width:100%;border-collapse:collapse}td,th{padding:2px 4px}th{text-align:left}th:not(:first-child),td:not(:first-child){text-align:right}.right{text-align:right}.bold{font-weight:bold}</style></head><body><div class="center bold" style="font-size:15px">ðŸŒ¸ FloriManager</div><div class="center" style="font-size:11px;color:#666">Invoice Receipt</div><hr/><p><b>Invoice:</b> ${sale.invoice_no}</p><p><b>Date:</b> ${sale.created_at?.slice(0,16).replace('T',' ')}</p>${sale.customer_name ? `<p><b>Customer:</b> ${sale.customer_name}</p>` : ''}<hr/><table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table><hr/><p class="right">Subtotal: <b>$${fmt(sale.subtotal)}</b></p>${sale.discount > 0 ? `<p class="right" style="color:green">Discount: -$${fmt(sale.discount)}</p>` : ''}${sale.tax > 0 ? `<p class="right">Tax: +$${fmt(sale.tax)}</p>` : ''}<p class="right bold" style="font-size:14px">Total: $${fmt(sale.total)}</p><p class="right">Paid: $${fmt(sale.paid)}</p>${sale.change_due > 0 ? `<p class="right">Change: $${fmt(sale.change_due)}</p>` : ''}<hr/><div class="center" style="font-size:11px;color:#888">Thank you for your purchase!</div></body></html>`
+    return `<!DOCTYPE html><html><head><style>body{font-family:monospace;font-size:12px;width:300px;margin:0 auto;padding:12px}hr{border:none;border-top:1px dashed #000;margin:6px 0}.center{text-align:center}table{width:100%;border-collapse:collapse}td,th{padding:2px 4px}th{text-align:left}th:not(:first-child),td:not(:first-child){text-align:right}.right{text-align:right}.bold{font-weight:bold}</style></head><body><div class="center bold" style="font-size:15px">🌸 FloriManager</div><div class="center" style="font-size:11px;color:#666">Invoice Receipt</div><hr/><p><b>Invoice:</b> ${sale.invoice_no}</p><p><b>Date:</b> ${sale.created_at?.slice(0,16).replace('T',' ')}</p>${sale.customer_name ? `<p><b>Customer:</b> ${sale.customer_name}</p>` : ''}<hr/><table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table><hr/><p class="right">Subtotal: <b>$${fmt(sale.subtotal)}</b></p>${sale.discount > 0 ? `<p class="right" style="color:green">Discount: -$${fmt(sale.discount)}</p>` : ''}${sale.tax > 0 ? `<p class="right">Tax: +$${fmt(sale.tax)}</p>` : ''}<p class="right bold" style="font-size:14px">Total: $${fmt(sale.total)}</p><p class="right">Paid: $${fmt(sale.paid)}</p>${sale.change_due > 0 ? `<p class="right">Change: $${fmt(sale.change_due)}</p>` : ''}<hr/><div class="center" style="font-size:11px;color:#888">Thank you for your purchase!</div></body></html>`
   }
 
-  // â”€â”€ Add to cart (with variant check) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Add to cart (with variant check) ──────────────────
   const handleProductClick = async (p) => {
-    if (p.quantity <= 0) return
+    if (p.quantity <= 0) {
+      showToast(`Only 0 quantity available.`, 'error')
+      return
+    }
     const vars = await window.api.variants.getByProduct(p.id)
     if (vars.length > 0) {
       setVarSelectModal({ product: p, variants: vars })
@@ -251,33 +320,63 @@ export default function POS() {
   }
 
   const addVariantToCart = (product, variant) => {
+    if (variant.quantity <= 0) {
+      showToast(`Only 0 quantity available.`, 'error')
+      return
+    }
     const key = `${product.id}_${variant.id}`
+    let validationFailed = false
     setCart(prev => {
       const existing = prev.find(i => i.cart_key === key)
       if (existing) {
-        if (existing.qty >= variant.quantity) return prev
+        if (existing.qty >= variant.quantity) {
+          validationFailed = true
+          return prev
+        }
         return prev.map(i => i.cart_key === key ? { ...i, qty: i.qty + 1, total: (i.qty + 1) * i.price } : i)
       }
-      return [...prev, { cart_key: key, product_id: product.id, variant_id: variant.id, name: `${product.name} - ${variant.name}`, price: variant.price || product.price, qty: 1, total: variant.price || product.price }]
+      return [...prev, { cart_key: key, product_id: product.id, variant_id: variant.id, name: `${product.name} - ${variant.name}`, price: variant.price || product.price, qty: 1, total: variant.price || product.price, stock_qty: variant.quantity }]
     })
+    if (validationFailed) {
+      showToast(`Only ${variant.quantity} quantity available.`, 'error')
+    }
     setVarSelectModal(null)
   }
 
   const addToCart = (product) => {
-    if (product.quantity <= 0) return
+    if (product.quantity <= 0) {
+      showToast(`Only 0 quantity available.`, 'error')
+      return
+    }
     const key = product.id
+    let validationFailed = false
     setCart(prev => {
       const existing = prev.find(i => i.cart_key === key)
       if (existing) {
-        if (existing.qty >= product.quantity) return prev
+        if (existing.qty >= product.quantity) {
+          validationFailed = true
+          return prev
+        }
         return prev.map(i => i.cart_key === key ? { ...i, qty: i.qty + 1, total: (i.qty + 1) * i.price } : i)
       }
-      return [...prev, { cart_key: key, product_id: product.id, variant_id: null, name: product.name, price: product.price, qty: 1, total: product.price }]
+      return [...prev, { cart_key: key, product_id: product.id, variant_id: null, name: product.name, price: product.price, qty: 1, total: product.price, stock_qty: product.quantity }]
     })
+    if (validationFailed) {
+      showToast(`Only ${product.quantity} quantity available.`, 'error')
+    }
   }
 
   const changeQty = (cartKey, delta) => {
+    let validationFailed = false
+    let limit = 0
     setCart(prev => {
+      const item = prev.find(i => i.cart_key === cartKey)
+      if (!item) return prev
+      if (delta > 0 && item.qty + delta > item.stock_qty) {
+        validationFailed = true
+        limit = item.stock_qty
+        return prev
+      }
       const updated = prev
         .map(i => i.cart_key === cartKey
           ? { ...i, qty: i.qty + delta, total: (i.qty + delta) * i.price }
@@ -292,6 +391,34 @@ export default function POS() {
       }
       return updated
     })
+    if (validationFailed) {
+      showToast(`Only ${limit} quantity available.`, 'error')
+    }
+  }
+
+  const setQtyDirect = (cartKey, newQty) => {
+    let exceeded = false
+    let stockLimit = 0
+    setCart(prev => {
+      const item = prev.find(i => i.cart_key === cartKey)
+      if (!item) return prev
+      const clamped = Math.max(1, Math.min(newQty, item.stock_qty))
+      if (newQty > item.stock_qty) {
+        exceeded = true
+        stockLimit = item.stock_qty
+      }
+      const updated = prev.map(i =>
+        i.cart_key === cartKey ? { ...i, qty: clamped, total: clamped * i.price } : i
+      )
+      const newSubtotal = updated.reduce((s, i) => s + i.total, 0)
+      if (discount > 0 && appliedMinAmount > 0 && newSubtotal < appliedMinAmount) {
+        setDiscount(0); setCoupon(''); setCouponMsg(''); setAppliedMinAmount(0)
+      }
+      return updated
+    })
+    if (exceeded) {
+      showToast(`Only ${stockLimit} quantity available.`, 'error')
+    }
   }
 
   const removeFromCart = (cartKey) => {
@@ -334,8 +461,14 @@ export default function POS() {
   // â”€â”€ Checkout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleCheckout = async () => {
     if (!cart.length) return
+    setPayError('')
+
+    if (total > 9000000000000000) {
+      return setPayError('Total amount is too large and exceeds system limits. Please check product prices and quantities.')
+    }
+
     const paidAmt = payMethod === 'cash' ? (parseFloat(paid) || 0) : total
-    if (payMethod === 'cash' && paidAmt < total) return alert('Paid amount is less than total.')
+    if (payMethod === 'cash' && paidAmt + 0.01 < total) return setPayError('Paid amount is less than total.')
 
     let txnNote = ''
     if (payMethod === 'card' && cardProcessType === 'gateway') {
@@ -375,15 +508,24 @@ export default function POS() {
       txnNote = `[Transfer Approved - ${providerLabel} - Ref: ${transferRef.trim()}]`
     }
 
-    const result = await window.api.sales.create({
-      customer_id: customer?.id || null,
-      items: cart,
-      discount,
-      tax: taxAmount,
-      paid: paidAmt,
-      payment_method: payMethod,
-      note: txnNote || null
-    })
+    let result;
+    try {
+      result = await window.api.sales.create({
+        customer_id: customer?.id || null,
+        items: cart,
+        discount,
+        tax: taxAmount,
+        paid: paidAmt,
+        payment_method: payMethod,
+        note: txnNote || null
+      })
+    } catch (err) {
+      console.error('Checkout error:', err)
+      setPayError('Failed to complete sale: ' + (err.message || 'Unknown error'))
+      setProcessingPayment(false)
+      setPaymentStep('')
+      return
+    }
 
     setLastSale(result)
     setReceipt({ sale: { ...result, subtotal, discount, tax: taxAmount, paid: paidAmt }, items: cart, customer })
@@ -391,6 +533,7 @@ export default function POS() {
     // Reset payment states
     setProcessingPayment(false)
     setPaymentStep('')
+    setPayError('')
     setCardNumber('')
     setCardExpiry('')
     setCardCvc('')
@@ -400,7 +543,8 @@ export default function POS() {
     setPayModal(false)
     clearCart()
     // Refresh products stock
-    window.api.products.getAll().then(setProducts).catch(() => { })
+    const updatedProducts = await window.api.products.getAll().catch(() => null)
+    if (updatedProducts) setProducts(updatedProducts)
   }
 
   // â”€â”€ Print receipt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -424,7 +568,7 @@ export default function POS() {
     !search || p.name.toLowerCase().includes(search.toLowerCase()) || (p.sku || '').toLowerCase().includes(search.toLowerCase())
   )
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', padding: '16px 20px' }}>
       {/* Tab bar */}
@@ -445,7 +589,7 @@ export default function POS() {
         ))}
       </div>
 
-      {/* â”€â”€ POS Tab â”€â”€ */}
+      {/* ⎯⎯ POS Tab ⎯⎯ */}
       {tab === 'pos' && (
         <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden', gap: 16 }}>
           {/* Left - Product Grid */}
@@ -465,7 +609,7 @@ export default function POS() {
               </div>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
                 {filtered.map(p => {
                   const inCart = cart.find(i => i.product_id === p.id)
                   const outOfStock = p.quantity <= 0
@@ -473,26 +617,86 @@ export default function POS() {
                     <button
                       key={p.id}
                       onClick={() => handleProductClick(p)}
-                      disabled={outOfStock}
                       style={{
-                        textAlign: 'left', border: `1px solid ${outOfStock ? '#e2e8f0' : inCart ? '#c7d2fe' : '#e2e8f0'}`,
-                        background: outOfStock ? '#f8fafc' : inCart ? '#ecfdf5' : '#fff',
-                        padding: 12, borderRadius: 10, cursor: outOfStock ? 'not-allowed' : 'pointer',
-                        opacity: outOfStock ? 0.5 : 1, transition: 'all 0.15s', position: 'relative',
-                        boxShadow: inCart ? '0 1px 3px rgba(79, 70, 229, 0.1)' : '0 1px 2px rgba(0,0,0,0.05)',
+                        textAlign: 'left',
+                        border: `1px solid ${outOfStock ? '#fecaca' : inCart ? '#bbf7d0' : '#e2e8f0'}`,
+                        background: outOfStock ? '#fff5f5' : inCart ? '#ecfdf5' : '#fff',
+                        padding: '10px 10px 8px',
+                        borderRadius: 10,
+                        cursor: outOfStock ? 'default' : 'pointer',
+                        transition: 'all 0.15s',
+                        position: 'relative',
+                        boxShadow: inCart ? '0 1px 4px rgba(0,222,171,0.15)' : '0 1px 2px rgba(0,0,0,0.05)',
+                        overflow: 'hidden',
+                        minWidth: 0,
+                        width: '100%',
+                        boxSizing: 'border-box',
                       }}
-                      onMouseEnter={e => { if (!outOfStock && !inCart) { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)'; e.currentTarget.style.borderColor = '#c7d2fe' } }}
+                      onMouseEnter={e => { if (!outOfStock && !inCart) { e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.09)'; e.currentTarget.style.borderColor = '#a7f3d0' } }}
                       onMouseLeave={e => { if (!outOfStock && !inCart) { e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)'; e.currentTarget.style.borderColor = '#e2e8f0' } }}
                     >
-                      {inCart && (
-                        <span style={{ position: 'absolute', top: 6, right: 6, background: '#00deab', color: '#fff', fontSize: 10, width: 20, height: 20, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600 }}>
+                      {/* Top-right badge */}
+                      {outOfStock && (
+                        <span style={{
+                          position: 'absolute', top: 5, right: 5,
+                          background: '#ef4444', color: '#fff',
+                          fontSize: 8, padding: '2px 5px', borderRadius: 99,
+                          fontWeight: 700, letterSpacing: '0.03em', lineHeight: 1.5,
+                          whiteSpace: 'nowrap'
+                        }}>
+                          Sold Out
+                        </span>
+                      )}
+                      {!outOfStock && inCart && (
+                        <span style={{
+                          position: 'absolute', top: 5, right: 5,
+                          background: '#00deab', color: '#fff',
+                          fontSize: 9, minWidth: 18, height: 18, borderRadius: '50%',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontWeight: 700, padding: '0 3px'
+                        }}>
                           {inCart.qty}
                         </span>
                       )}
-                      <p style={{ fontSize: 12, fontWeight: 600, color: '#1e293b', margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: inCart ? 14 : 0 }}>{p.name}</p>
-                      <p style={{ fontSize: 11, color: '#94a3b8', margin: '0 0 6px' }}>{p.sku || p.category_name || '-'}</p>
-                      <p style={{ fontSize: 15, fontWeight: 700, color: '#00deab', margin: '0 0 4px' }}>${fmt(p.price)}</p>
-                      <p style={{ fontSize: 11, color: p.quantity <= p.low_stock_threshold ? '#d97706' : '#94a3b8', margin: 0 }}>
+                      {!outOfStock && !inCart && (
+                        <span style={{
+                          position: 'absolute', top: 5, right: 5,
+                          background: '#dcfce7', color: '#16a34a',
+                          fontSize: 8, padding: '2px 5px', borderRadius: 99,
+                          fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap'
+                        }}>
+                          In Stock
+                        </span>
+                      )}
+                      {/* Product name - truncated, padded right to avoid badge */}
+                      <p style={{
+                        fontSize: 12, fontWeight: 600,
+                        color: outOfStock ? '#94a3b8' : '#1e293b',
+                        margin: '0 0 2px',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        paddingRight: 22,
+                        lineHeight: 1.4
+                      }}>{p.name}</p>
+                      {/* SKU/category - truncated */}
+                      <p style={{
+                        fontSize: 10, color: '#94a3b8',
+                        margin: '0 0 5px',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                      }}>{p.sku || p.category_name || '-'}</p>
+                      {/* Price */}
+                      <p style={{
+                        fontSize: 14, fontWeight: 700,
+                        color: outOfStock ? '#cbd5e1' : '#00deab',
+                        margin: '0 0 3px',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                      }}>${fmt(p.price)}</p>
+                      {/* Stock */}
+                      <p style={{
+                        fontSize: 10,
+                        color: outOfStock ? '#f87171' : p.quantity <= p.low_stock_threshold ? '#d97706' : '#94a3b8',
+                        margin: 0,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                      }}>
                         Stock: {p.quantity} {p.unit}
                       </p>
                     </button>
@@ -530,7 +734,7 @@ export default function POS() {
                   Cart is empty.<br />Click a product to add.
                 </div>
                 : cart.map(item => (
-                  <CartRow key={item.cart_key} item={item} onQty={changeQty} onRemove={removeFromCart} />
+                  <CartRow key={item.cart_key} item={item} onQty={changeQty} onRemove={removeFromCart} onQtyDirect={setQtyDirect} />
                 ))
               }
             </div>
@@ -696,9 +900,15 @@ export default function POS() {
       </Modal>
 
       {/* â”€â”€ Payment Modal â”€â”€ */}
-      <Modal open={payModal} onClose={() => !processingPayment && setPayModal(false)} title="Complete Payment">
+      <Modal open={payModal} onClose={() => { if(!processingPayment) { setPayModal(false); setPayError(''); } }} title="Complete Payment">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, position: 'relative', minWidth: payMethod === 'card' ? 380 : 'auto' }}>
           
+          {payError && (
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: 12, color: '#dc2626', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <X size={16} /> {payError}
+            </div>
+          )}
+
           {/* Processing Overlay */}
           {processingPayment && (
             <div style={{
@@ -911,7 +1121,7 @@ export default function POS() {
               onMouseLeave={e => { if(!processingPayment) e.currentTarget.style.background = '#00deab' }}>
               <Check size={14} /> Confirm Sale
             </button>
-            <button onClick={() => !processingPayment && setPayModal(false)} disabled={processingPayment}
+            <button onClick={() => { if(!processingPayment) { setPayModal(false); setPayError(''); } }} disabled={processingPayment}
               style={{ ...styles.button, flex: 0.8, background: '#f1f5f9', color: '#475569', padding: '10px 12px', fontSize: 13, opacity: processingPayment ? 0.6 : 1 }}
               onMouseEnter={e => { if(!processingPayment) e.currentTarget.style.background = '#e2e8f0' }}
               onMouseLeave={e => { if(!processingPayment) e.currentTarget.style.background = '#f1f5f9' }}>Cancel</button>
@@ -1017,6 +1227,7 @@ export default function POS() {
           </div>
         </div>
       </Modal>
+      <Toast message={toast.msg} type={toast.type} onClose={() => setToast({ msg: '', type: 'success' })} />
     </div>
   )
 }

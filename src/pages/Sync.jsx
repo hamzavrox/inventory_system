@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { RefreshCw, HardDrive, FolderOpen, Upload, CheckCircle, XCircle, Clock, AlertTriangle, Database } from 'lucide-react'
+import { RefreshCw, HardDrive, FolderOpen, Upload, CheckCircle, XCircle, Clock, AlertTriangle, Database, Cloud } from 'lucide-react'
 import { C } from '../utils/pageStyles'
 
 const AUTO_KEY   = 'auto_backup_cfg'
 const SERVER_KEY = 'sync_server_cfg'
-const TABS = ['Local Backup', 'Auto Backup', 'Restore', 'Backup History']
+const TABS = ['Local Backup', 'Google Drive', 'Auto Backup', 'Restore', 'Backup History']
 
 export default function Sync() {
   const [syncStatus, setSyncStatus] = useState({ pending: 0, failed: 0, synced: 0 })
@@ -19,50 +19,77 @@ export default function Sync() {
   const [restoreMsg, setRestoreMsg] = useState('')
   const [autoEnabled, setAutoEnabled] = useState(() => JSON.parse(localStorage.getItem(AUTO_KEY) || '{"enabled":true}').enabled)
   const [autoTime,    setAutoTime]    = useState(() => JSON.parse(localStorage.getItem(AUTO_KEY) || '{"time":"17:00"}').time || '17:00')
+  const [autoDriveEnabled, setAutoDriveEnabled] = useState(() => JSON.parse(localStorage.getItem(AUTO_KEY) || '{}').driveEnabled || false)
   const [autoMsg,     setAutoMsg]     = useState('')
   const [apiUrl,      setApiUrl]      = useState(() => JSON.parse(localStorage.getItem(SERVER_KEY) || '{"url":""}').url || '')
   const [apiToken,    setApiToken]    = useState(() => JSON.parse(localStorage.getItem(SERVER_KEY) || '{"token":""}').token || '')
   const [serverMsg,   setServerMsg]   = useState('')
+
+  // Google Drive state
+  const [driveStatus, setDriveStatus] = useState({ connected: false })
+  const [driveConnecting, setDriveConnecting] = useState(false)
+  const [driveMsg, setDriveMsg] = useState('')
+  const [driveUploading, setDriveUploading] = useState(false)
+  const [driveProgress, setDriveProgress] = useState(0)
 
   const timerRef     = useRef(null)
   const autoTimerRef = useRef(null)
 
   const loadStatus  = () => window.api.sync.status().then(setSyncStatus).catch(() => {})
   const loadBackups = () => window.api.backup.getAll().then(setBackups).catch(() => {})
+  const loadDriveStatus = () => window.api.gdrive?.status().then(setDriveStatus).catch(() => {})
 
   useEffect(() => {
     loadStatus()
     loadBackups()
+    loadDriveStatus()
     if (localStorage.getItem('db_restored_msg')) {
       localStorage.removeItem('db_restored_msg')
       setRestoreMsg('✔ Database restored successfully! Please restart the app.')
       timerRef.current = setTimeout(() => setRestoreMsg(''), 30000)
     }
+
+    // Drive upload progress listeners
+    const onStart = (data) => { setDriveUploading(true); setDriveProgress(0); if(!data?.auto) setDriveMsg(`Uploading ${data?.fileName || 'backup'}...`) }
+    const onProgress = (data) => setDriveProgress(data?.total ? Math.round((data.done / data.total) * 100) : 0)
+    const onDone = (data) => { 
+      setDriveUploading(false); 
+      if(!data?.auto) { setDriveMsg(`✔ Upload complete`); setTimeout(() => setDriveMsg(''), 3000); }
+      loadBackups()
+    }
+    const onError = (data) => { 
+      setDriveUploading(false); 
+      if(!data?.auto) setDriveMsg(`✖ Upload failed: ${data?.error || 'Unknown error'}`) 
+    }
+
+    // Auto backup process listeners
+    const onAutoStart = () => { setAutoMsg('⚡ Auto backup starting...') }
+    const onAutoDone = (data) => { setAutoMsg(`✔ Auto backup saved - ${data?.size_kb || 0} KB`); loadBackups(); setTimeout(() => setAutoMsg(''), 5000) }
+    const onAutoError = (data) => { setAutoMsg(`✖ Auto backup failed: ${data?.error || 'Unknown error'}`); setTimeout(() => setAutoMsg(''), 5000) }
+
+    window.api.on('gdrive:upload:start', onStart)
+    window.api.on('gdrive:upload:progress', onProgress)
+    window.api.on('gdrive:upload:done', onDone)
+    window.api.on('gdrive:upload:error', onError)
+    window.api.on('auto:backup:start', onAutoStart)
+    window.api.on('auto:backup:done', onAutoDone)
+    window.api.on('auto:backup:error', onAutoError)
+
+    return () => {
+      window.api.off('gdrive:upload:start', onStart)
+      window.api.off('gdrive:upload:progress', onProgress)
+      window.api.off('gdrive:upload:done', onDone)
+      window.api.off('gdrive:upload:error', onError)
+      window.api.off('auto:backup:start', onAutoStart)
+      window.api.off('auto:backup:done', onAutoDone)
+      window.api.off('auto:backup:error', onAutoError)
+    }
   }, [])
 
-  useEffect(() => {
-    clearInterval(autoTimerRef.current)
-    if (!autoEnabled) return
-    const check = () => {
-      const now = new Date()
-      const [h, m] = autoTime.split(':').map(Number)
-      if (now.getHours() === h && now.getMinutes() === m) {
-        const key = `${now.toDateString()}_${autoTime}`
-        if (localStorage.getItem('auto_backup_last') !== key) {
-          localStorage.setItem('auto_backup_last', key)
-          window.api.backup.create()
-            .then(res => { setAutoMsg(`✔ Auto backup saved - ${res.size_kb} KB`); loadBackups() })
-            .catch(() => setAutoMsg('✖ Auto backup failed'))
-        }
-      }
-    }
-    check()
-    autoTimerRef.current = setInterval(check, 60000)
-    return () => clearInterval(autoTimerRef.current)
-  }, [autoEnabled, autoTime])
+
 
   const saveAutoConfig = async () => {
-    const cfg = { enabled: autoEnabled, time: autoTime }
+    const cfg = { enabled: autoEnabled, time: autoTime, driveEnabled: autoDriveEnabled }
     localStorage.setItem(AUTO_KEY, JSON.stringify(cfg))
     try {
       await window.api.autobackup.save(cfg)
@@ -71,6 +98,23 @@ export default function Sync() {
       setAutoMsg(`✖ Save failed: ${e.message}`)
     }
     setTimeout(() => setAutoMsg(''), 4000)
+  }
+
+  const handleDriveConnect = async () => {
+    if (!window.api.gdrive) return setDriveMsg('✖ Please restart the app to apply the latest updates.')
+    setDriveConnecting(true); setDriveMsg('')
+    try {
+      const res = await window.api.gdrive.connect()
+      if (res.error) setDriveMsg(`✖ ${res.error}`)
+      else setDriveStatus(res)
+    } catch (e) { setDriveMsg(`✖ ${e.message}`) }
+    setDriveConnecting(false)
+  }
+
+  const handleDriveDisconnect = async () => {
+    if (!window.api.gdrive) return
+    await window.api.gdrive.disconnect()
+    setDriveStatus({ connected: false })
   }
 
   const saveServerConfig = () => {
@@ -271,8 +315,8 @@ export default function Sync() {
               </div>
               <Msg msg={backupMsg} />
               <div style={{ display: 'flex', gap: 8 }}>
-                <button style={{ ...C.btn, flex: 1, justifyContent: 'center' }} onClick={handleBackup} disabled={backing}>
-                  <HardDrive size={14} />{backing ? 'Backing up...' : 'Create Backup'}
+                <button style={{ ...C.btn, flex: 1, justifyContent: 'center' }} onClick={handleBackup} disabled={backing || driveUploading}>
+                  <HardDrive size={14} />{backing ? 'Backing up...' : driveUploading ? `Uploading ${driveProgress}%` : 'Create Backup'}
                 </button>
                 <button style={{ ...C.btn2, flexShrink: 0 }} onClick={() => window.api.backup.openFolder()}>
                   <FolderOpen size={14} /> Open Folder
@@ -281,8 +325,56 @@ export default function Sync() {
             </div>
           )}
 
-          {/* Auto Backup */}
+          {/* Google Drive */}
           {tab === 1 && (
+            <div style={C.cardP}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: driveStatus.connected ? '#ecfdf5' : '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Cloud size={18} color={driveStatus.connected ? '#00deab' : '#94a3b8'} />
+                </div>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', margin: 0 }}>Google Drive Backup</p>
+                  <p style={{ fontSize: 12, color: driveStatus.connected ? '#059669' : '#94a3b8', margin: '2px 0 0' }}>
+                    {driveStatus.connected ? `Connected: ${driveStatus.email}` : 'Not connected'}
+                  </p>
+                </div>
+              </div>
+
+              {driveStatus.connected && driveStatus.storageTotal > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 11, color: '#475569' }}>Storage Used</span>
+                    <span style={{ fontSize: 11, color: '#475569' }}>
+                      {Math.round(driveStatus.storageUsed / (1024*1024*1024))} GB / {Math.round(driveStatus.storageTotal / (1024*1024*1024))} GB
+                    </span>
+                  </div>
+                  <div style={{ height: 5, background: '#f1f5f9', borderRadius: 99, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', background: '#00deab', borderRadius: 99, width: `${(driveStatus.storageUsed / driveStatus.storageTotal) * 100}%` }} />
+                  </div>
+                </div>
+              )}
+
+              <Msg msg={driveMsg} />
+              
+              {!driveStatus.connected ? (
+                <button style={{ ...C.btn, width: '100%', justifyContent: 'center' }} onClick={handleDriveConnect} disabled={driveConnecting}>
+                  <Cloud size={14} />{driveConnecting ? 'Connecting...' : 'Connect Google Drive'}
+                </button>
+              ) : (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button style={{ ...C.btn, flex: 1, justifyContent: 'center' }} onClick={handleBackup} disabled={backing || driveUploading}>
+                    <Upload size={14} />{driveUploading ? `Uploading ${driveProgress}%` : 'Upload Latest Backup Now'}
+                  </button>
+                  <button style={{ ...C.btnD, flexShrink: 0 }} onClick={handleDriveDisconnect}>
+                    Disconnect
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Auto Backup */}
+          {tab === 2 && (
             <div style={C.cardP}>
               <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 14 }}>Auto Backup</p>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
@@ -292,10 +384,28 @@ export default function Sync() {
                 </div>
               </div>
               {autoEnabled && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                  <label style={{ fontSize: 12, color: '#475569', whiteSpace: 'nowrap' }}>Backup Time</label>
-                  <input type="time" value={autoTime} onChange={e => setAutoTime(e.target.value)} style={{ ...C.input, flex: 1 }} />
-                </div>
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                    <label style={{ fontSize: 12, color: '#475569', whiteSpace: 'nowrap' }}>Backup Time</label>
+                    <input type="time" value={autoTime} onChange={e => setAutoTime(e.target.value)} style={{ ...C.input, flex: 1 }} />
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, padding: '10px 12px', background: '#f8fafc', borderRadius: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Cloud size={16} color="#64748b" />
+                      <span style={{ fontSize: 13, color: '#334155' }}>Upload to Google Drive</span>
+                    </div>
+                    <div onClick={() => {
+                      if (!driveStatus.connected && !autoDriveEnabled) {
+                        alert("Please connect Google Drive first in the Google Drive tab.");
+                        return;
+                      }
+                      setAutoDriveEnabled(v => !v)
+                    }} style={{ width: 40, height: 22, borderRadius: 99, background: autoDriveEnabled ? '#00deab' : '#e2e8f0', position: 'relative', cursor: 'pointer', transition: 'background 0.2s', flexShrink: 0 }}>
+                      <div style={{ position: 'absolute', top: 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transition: 'transform 0.2s', transform: autoDriveEnabled ? 'translateX(21px)' : 'translateX(3px)' }} />
+                    </div>
+                  </div>
+                </>
               )}
               <Msg msg={autoMsg} />
               <button style={{ ...C.btn, width: '100%', justifyContent: 'center' }} onClick={saveAutoConfig}>
@@ -305,7 +415,7 @@ export default function Sync() {
           )}
 
           {/* Restore */}
-          {tab === 2 && (
+          {tab === 3 && (
             <div style={C.cardP}>
               <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 14 }}>Restore</p>
               <Msg msg={restoreMsg} onClose={() => { setRestoreMsg(''); clearTimeout(timerRef.current) }} />
@@ -317,7 +427,7 @@ export default function Sync() {
           )}
 
           {/* Backup History */}
-          {tab === 3 && (
+          {tab === 4 && (
             <div style={{ ...C.card, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
                 <p style={{ fontSize: 13, fontWeight: 600, color: '#334155', margin: 0 }}>Backup History</p>

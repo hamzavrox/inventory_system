@@ -2,8 +2,22 @@ const fs = require('fs')
 const path = require('path')
 const { app } = require('electron')
 const { getDB } = require('./db/database')
+const { v4: uuid } = require('uuid')
 
 let cachedLocationId = null
+
+// ── Audit logger ────────────────────────────────────────────────────────────
+function logSyncEvent({ topic, shopifyId, imsId, status, message }) {
+  try {
+    const db = getDB()
+    db.prepare(`
+      INSERT INTO shopify_webhook_log (id, source, topic, shopify_id, ims_id, status, message)
+      VALUES (?, 'ims_to_shopify', ?, ?, ?, ?, ?)
+    `).run(uuid(), topic, shopifyId || null, imsId || null, status, message || null)
+  } catch (err) {
+    console.error('[Shopify Sync Log Error]:', err.message)
+  }
+}
 
 function getShopifyConfig() {
   try {
@@ -109,6 +123,12 @@ async function syncProduct(productId) {
     return
   }
 
+  // Skip sync if product is already synced (came from Shopify webhook)
+  if (product.synced === 1) {
+    console.log(`[Shopify Sync]: Product "${product.name}" already synced, skipping to prevent loop`)
+    return
+  }
+
   const { domain, token } = config
 
   try {
@@ -152,13 +172,14 @@ async function syncProduct(productId) {
       const shopifyVariantId       = String(createData.product.variants[0].id)
       const shopifyInventoryItemId = String(createData.product.variants[0].inventory_item_id)
 
-      // Persist Shopify IDs to local DB
+      // Persist Shopify IDs to local DB and mark synced=1 (prevents echo-back webhook loop)
       db.prepare(`
         UPDATE products
-        SET shopify_product_id = ?, shopify_variant_id = ?, shopify_inventory_item_id = ?
+        SET shopify_product_id = ?, shopify_variant_id = ?, shopify_inventory_item_id = ?, synced = 1
         WHERE id = ?
       `).run(shopifyProductId, shopifyVariantId, shopifyInventoryItemId, product.id)
 
+      logSyncEvent({ topic: 'products/create', shopifyId: shopifyProductId, imsId: product.id, status: 'success', message: `Created "${product.name}" on Shopify` })
       console.log(`[Shopify Sync]: Product created. Shopify ID: ${shopifyProductId}`)
 
       // ── SET INVENTORY ── connect first, then set quantity
@@ -191,10 +212,15 @@ async function syncProduct(productId) {
 
       const updateData = await updateRes.json()
       if (!updateRes.ok) {
-        console.error('[Shopify Update Failed]:', JSON.stringify(updateData.errors || updateData))
+        const errMsg = JSON.stringify(updateData.errors || updateData)
+        console.error('[Shopify Update Failed]:', errMsg)
+        logSyncEvent({ topic: 'products/update', shopifyId: product.shopify_product_id, imsId: product.id, status: 'error', message: errMsg })
         return
       }
 
+      // Mark synced=1 immediately so the resulting Shopify webhook is a no-op
+      db.prepare(`UPDATE products SET synced = 1 WHERE id = ?`).run(product.id)
+      logSyncEvent({ topic: 'products/update', shopifyId: product.shopify_product_id, imsId: product.id, status: 'success', message: `Updated "${product.name}" on Shopify` })
       console.log(`[Shopify Sync]: Product updated. ID: ${product.shopify_product_id}`)
 
       // ── SYNC INVENTORY LEVEL ──
@@ -220,10 +246,13 @@ async function deleteProduct(shopifyProductId) {
       headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' }
     })
     if (res.ok) {
+      logSyncEvent({ topic: 'products/delete', shopifyId: shopifyProductId, status: 'success', message: `Deleted product ${shopifyProductId} from Shopify` })
       console.log(`[Shopify Sync]: Deleted product ${shopifyProductId}`)
     } else {
       const data = await res.json()
-      console.error('[Shopify Delete Failed]:', JSON.stringify(data.errors || data))
+      const errMsg = JSON.stringify(data.errors || data)
+      logSyncEvent({ topic: 'products/delete', shopifyId: shopifyProductId, status: 'error', message: errMsg })
+      console.error('[Shopify Delete Failed]:', errMsg)
     }
   } catch (err) {
     console.error('[Shopify Delete Error]:', err.message)

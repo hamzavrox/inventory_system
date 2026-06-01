@@ -19,6 +19,7 @@
     "better-sqlite3": "^12.9.0",
     "dotenv": "^17.4.2",
     "framer-motion": "^12.38.0",
+    "googleapis": "^172.0.0",
     "jsbarcode": "^3.12.3",
     "lucide-react": "^1.11.0",
     "qrcode": "^1.5.4",
@@ -62,12 +63,23 @@
       "public/**"
     ],
     "extraResources": [
-      { "from": "electron", "to": "electron" },
-      { "from": "public", "to": "public" }
+      {
+        "from": "electron",
+        "to": "electron"
+      },
+      {
+        "from": "public",
+        "to": "public"
+      }
     ],
     "win": {
       "target": [
-        { "target": "nsis", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "public/Inventory_Management_System_Logo.png"
     },
@@ -80,7 +92,12 @@
     },
     "mac": {
       "target": [
-        { "target": "dmg", "arch": ["universal"] }
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
       ],
       "icon": "public/Inventory_Management_System_Logo.png",
       "x64ArchFiles": "**/node_modules/**/*.node"
@@ -91,5 +108,3 @@
     }
   }
 }
-
-
