@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { CreditCard, ShoppingBag, CheckCircle, XCircle, RefreshCw, Save, Webhook, Copy, Check, ExternalLink, Sparkles } from 'lucide-react'
+import { CreditCard, ShoppingBag, CheckCircle, XCircle, RefreshCw, Save, Webhook, Copy, Check, ExternalLink, Sparkles, Settings, Zap } from 'lucide-react'
 import { FormField, Input, Select, Btn } from '../components/FormField'
 import { C } from '../utils/pageStyles'
 
@@ -17,6 +17,8 @@ export default function Integrations() {
   const [registeringWebhooks, setRegisteringWebhooks] = useState(false)
   const [importingProducts, setImportingProducts] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [activeShopifyTab, setActiveShopifyTab] = useState(0) // 0: Connection, 1: Bidirectional Sync
+  
   const f = (k, v) => setCfg(s => ({ ...s, [k]: v }))
 
   const copyToClipboard = (text) => {
@@ -179,7 +181,7 @@ export default function Integrations() {
   }
 
   const Toggle = ({ k, label, sub }) => (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid #f1f5f9' }}>
       <div>
         <p style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', margin: 0 }}>{label}</p>
         {sub && <p style={{ fontSize: 11, color: '#64748b', margin: '3px 0 0', lineHeight: 1.4 }}>{sub}</p>}
@@ -190,160 +192,399 @@ export default function Integrations() {
     </div>
   )
 
-  const IntCard = ({ icon: Icon, title, desc, iconBg, iconColor, connected, type, children }) => (
-    <div style={{ ...C.card, overflow: 'hidden', transition: 'all 0.3s', border: '1px solid #f1f5f9' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '18px 20px', borderBottom: '2px solid #f1f5f9', background: 'linear-gradient(135deg, #fafafa 0%, #ffffff 100%)' }}>
-        <div style={{ width: 48, height: 48, borderRadius: 12, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
-          <Icon size={22} color={iconColor} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', margin: 0, letterSpacing: '-0.01em' }}>{title}</p>
-            {connected
-              ? <span style={{ ...C.badge('#ecfdf5','#059669'), display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', fontWeight: 600 }}><CheckCircle size={11} /> Connected</span>
-              : <span style={{ ...C.badge('#f1f5f9','#64748b'), display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px' }}><XCircle size={11} /> Not configured</span>}
-          </div>
-          <p style={{ fontSize: 12, color: '#64748b', margin: '3px 0 0', fontWeight: 500 }}>{desc}</p>
-        </div>
-      </div>
-      <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {children}
-        {testResult[type] && (
-          <div style={{ background: testResult[type]==='success' ? 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)' : 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)', border: `2px solid ${testResult[type]==='success' ? '#86efac' : '#fca5a5'}`, borderRadius: 10, padding: '10px 14px', fontSize: 12, color: testResult[type]==='success' ? '#047857' : '#b91c1c', fontWeight: 600, boxShadow: testResult[type]==='success' ? '0 4px 12px rgba(5, 150, 105, 0.15)' : '0 4px 12px rgba(220, 38, 38, 0.15)' }}>
-            {testResult[type]==='success' ? '✅ Connection successful! Configuration is valid.' : `❌ Connection failed: ${testMessage[type] || 'Invalid credentials.'}`}
-          </div>
-        )}
-        <button style={{ ...C.btn2, justifyContent: 'center', padding: '10px', fontWeight: 600 }} onClick={() => testConnection(type)} disabled={testing[type]}>
-          <RefreshCw size={14} className={testing[type] ? 'animate-spin' : ''} />
-          {testing[type] ? 'Testing...' : 'Test Connection'}
-        </button>
-      </div>
-    </div>
-  )
+  const paymentConnected = !!(cfg.payment_key && cfg.payment_secret);
+  const shopifyConnected = !!(cfg.shopify_store && cfg.shopify_token);
 
   return (
-    <div style={{ ...C.page, overflowY: 'auto', maxHeight: 'calc(100vh - 80px)' }}>
-      <div style={C.header}>
+    <div style={{ ...C.page, overflowY: 'auto', maxHeight: 'calc(100vh - 80px)', background: '#f8fafc' }}>
+      {/* Header */}
+      <div style={{ ...C.header, paddingBottom: 10, borderBottom: '1px solid #e2e8f0' }}>
         <div>
-          <h2 style={C.title}>Integrations</h2>
-          <p style={C.subtitle}>Connect external services and payment gateways</p>
+          <h2 style={{ ...C.title, fontSize: 22, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+            Integrations
+          </h2>
+          <p style={C.subtitle}>Connect central external services and payment gateways to IMS</p>
         </div>
-        <button style={C.btn} onClick={handleSave}><Save size={14} /> {saved ? 'Saved ✅' : 'Save All'}</button>
+        <button 
+          style={{ 
+            ...C.btn, 
+            background: 'linear-gradient(135deg, #00deab 0%, #059669 100%)', 
+            boxShadow: '0 4px 12px rgba(0, 222, 171, 0.3)',
+            padding: '10px 20px',
+            fontSize: 14,
+            fontWeight: 600,
+            transition: 'all 0.2s'
+          }} 
+          onClick={handleSave}
+        >
+          <Save size={16} /> {saved ? 'Saved Successfully ✅' : 'Save All Settings'}
+        </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: 20, marginBottom: 20 }}>
-        <IntCard icon={CreditCard} title="Payment Gateway" desc="Accept card payments at POS" iconBg="#ecfdf5" iconColor="#00deab" connected={!!(cfg.payment_key && cfg.payment_secret)} type="payment">
-          <FormField label="Gateway Provider">
-            <Select value={cfg.payment_gateway} onChange={e => f('payment_gateway', e.target.value)}>
-              <option value="">- Select Provider -</option>
-              <option value="stripe">Stripe</option>
-              <option value="paypal">PayPal</option>
-              <option value="square">Square</option>
-              <option value="razorpay">Razorpay</option>
-              <option value="custom">Custom / Local</option>
-            </Select>
-          </FormField>
-          <FormField label="API Key / Publishable Key"><Input placeholder="pk_live_..." value={cfg.payment_key} onChange={e => f('payment_key', e.target.value)} /></FormField>
-          <FormField label="Secret Key"><Input type="password" placeholder="sk_live_..." value={cfg.payment_secret} onChange={e => f('payment_secret', e.target.value)} /></FormField>
-        </IntCard>
-
-        <IntCard icon={ShoppingBag} title="Shopify Integration" desc="Sync products and orders with Shopify" iconBg="#ecfdf5" iconColor="#059669" connected={!!(cfg.shopify_store && cfg.shopify_token)} type="shopify">
-          <FormField label="Store URL">
-            <div style={{ position: 'relative' }}>
-              <Input placeholder="your-store.myshopify.com" value={cfg.shopify_store} onChange={e => f('shopify_store', e.target.value)} />
-              {cfg.shopify_store && (
-                <a href={`https://${cfg.shopify_store}/admin`} target="_blank" rel="noopener noreferrer" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#059669' }}>
-                  <ExternalLink size={16} />
-                </a>
-              )}
+      {/* Two Column Layout Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 24, alignItems: 'start', marginTop: 8 }}>
+        
+        {/* Left Column: Payment Gateway */}
+        <div style={{ ...C.card, borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.03)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '20px 24px', borderBottom: '1px solid #f1f5f9', background: 'linear-gradient(135deg, #fafbfd 0%, #ffffff 100%)' }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(186, 230, 253, 0.4)' }}>
+              <CreditCard size={22} color="#0284c7" />
             </div>
-          </FormField>
-          <FormField label="Admin API Access Token"><Input type="password" placeholder="shpat_..." value={cfg.shopify_token} onChange={e => f('shopify_token', e.target.value)} /></FormField>
-          <Toggle k="shopify_sync" label="Auto-sync Products" sub="Push product changes to Shopify automatically" />
-          
-          <div style={{ borderTop: '2px solid #f1f5f9', marginTop: 8, paddingTop: 16, background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)', borderRadius: 12, padding: 16, marginLeft: -20, marginRight: -20, marginBottom: -20, maxHeight: '600px', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, paddingBottom: 12, borderBottom: '2px solid #e2e8f0' }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #059669 0%, #047857 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(5, 150, 105, 0.35)' }}>
-                <Webhook size={18} color="#fff" />
-              </div>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', margin: 0, letterSpacing: '-0.01em' }}>Bidirectional Sync</p>
-                <p style={{ fontSize: 10, color: '#64748b', margin: '2px 0 0', fontWeight: 600 }}>Real-time webhooks</p>
-              </div>
-              <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde047 100%)', border: '1px solid #fbbf24', borderRadius: 6, padding: '4px 10px', fontSize: 10, fontWeight: 700, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.05em', boxShadow: '0 2px 6px rgba(251, 191, 36, 0.3)' }}>
-                <Sparkles size={10} style={{ display: 'inline', marginRight: 3 }} />Beta
-              </div>
-            </div>
-
-            <div style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', border: '2px solid #93c5fd', borderRadius: 10, padding: '10px 12px', marginBottom: 14, display: 'flex', gap: 8 }}>
-              <div style={{ fontSize: 16, flexShrink: 0 }}>💡</div>
-              <p style={{ fontSize: 11, color: '#1e40af', margin: 0, lineHeight: 1.5, fontWeight: 600 }}>
-                Enable real-time sync from Shopify to IMS. Any product changes in Shopify will instantly reflect in your inventory system.
-                <br/><br/>
-                <strong>Note:</strong> Test Connection may fail due to ngrok's browser warning page, but webhook registration will work directly with Shopify.
-              </p>
-            </div>
-            
-            <FormField label="Webhook URL">
-              <div style={{ position: 'relative' }}>
-                <Input 
-                  placeholder="https://abc123.ngrok.io" 
-                  value={cfg.shopify_webhook_url} 
-                  onChange={e => f('shopify_webhook_url', e.target.value)}
-                  style={{ fontFamily: 'monospace', fontSize: 12, paddingRight: 40, background: '#f8fafc', border: '2px solid #e2e8f0' }}
-                />
-                {cfg.shopify_webhook_url && (
-                  <button onClick={() => copyToClipboard(cfg.shopify_webhook_url)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', cursor: 'pointer', color: copied ? '#059669' : '#64748b', padding: 4 }}>
-                    {copied ? <Check size={16} /> : <Copy size={16} />}
-                  </button>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <p style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', margin: 0 }}>Payment Gateway</p>
+                {paymentConnected ? (
+                  <span style={{ ...C.badge('#ecfdf5', '#059669'), display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', fontWeight: 600 }}>
+                    <CheckCircle size={11} /> Connected
+                  </span>
+                ) : (
+                  <span style={{ ...C.badge('#f1f5f9', '#64748b'), display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px' }}>
+                    <XCircle size={11} /> Disconnected
+                  </span>
                 )}
               </div>
-            </FormField>
-            
-            <FormField label="Webhook Secret (Optional)">
-              <Input type="password" placeholder="f3931553aab2812602e..." value={cfg.shopify_webhook_secret} onChange={e => f('shopify_webhook_secret', e.target.value)} style={{ fontFamily: 'monospace', fontSize: 12, background: '#f8fafc', border: '2px solid #e2e8f0' }} />
-            </FormField>
-            
-            {webhookStatus && (
-              <div style={{ background: webhookStatus.includes('✅') ? 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)' : webhookStatus.includes('🔄') ? 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' : 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)', border: `2px solid ${webhookStatus.includes('✅') ? '#86efac' : webhookStatus.includes('🔄') ? '#93c5fd' : '#fca5a5'}`, borderRadius: 10, padding: '10px 14px', fontSize: 12, color: webhookStatus.includes('✅') ? '#047857' : webhookStatus.includes('🔄') ? '#1e40af' : '#b91c1c', marginBottom: 14, fontWeight: 700, boxShadow: webhookStatus.includes('✅') ? '0 4px 14px rgba(5, 150, 105, 0.2)' : 'none' }}>
-                {webhookStatus}
-              </div>
-            )}
-            
-            <button style={{ width: '100%', padding: '12px 18px', background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.3s', boxShadow: '0 6px 18px rgba(59, 130, 246, 0.4)', letterSpacing: '0.02em', marginBottom: 10 }} onClick={testWebhookUrl}>
-              <RefreshCw size={15} />
-              Test Connection
-            </button>
-            
-            <button style={{ width: '100%', padding: '12px 18px', background: registeringWebhooks ? 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)' : 'linear-gradient(135deg, #059669 0%, #047857 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: registeringWebhooks ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.3s', boxShadow: registeringWebhooks ? 'none' : '0 6px 18px rgba(5, 150, 105, 0.4)', letterSpacing: '0.02em', marginBottom: 10 }} onClick={registerWebhooks} disabled={registeringWebhooks}>
-              <Webhook size={15} />
-              {registeringWebhooks ? 'Registering Webhooks...' : 'Register Webhooks with Shopify'}
-            </button>
-
-            <button style={{ width: '100%', padding: '12px 18px', background: importingProducts ? 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)' : 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: importingProducts ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.3s', boxShadow: importingProducts ? 'none' : '0 6px 18px rgba(124, 58, 237, 0.4)', letterSpacing: '0.02em' }} onClick={handleBulkImport} disabled={importingProducts}>
-              <ShoppingBag size={15} />
-              {importingProducts ? 'Importing Products...' : 'Bulk Import Products from Shopify'}
-            </button>
-            
-            <div style={{ background: 'linear-gradient(135deg, #fefce8 0%, #fef9c3 100%)', border: '2px solid #fde047', borderRadius: 10, padding: '12px 14px', marginTop: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <span style={{ fontSize: 14 }}>📋</span>
-                <p style={{ fontSize: 11, fontWeight: 700, color: '#854d0e', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Quick Setup</p>
-              </div>
-              <ol style={{ fontSize: 10, color: '#713f12', margin: 0, paddingLeft: 18, lineHeight: 1.7, fontWeight: 600 }}>
-                <li>Run <code style={{ background: '#fef3c7', padding: '2px 6px', borderRadius: 4, fontFamily: 'monospace', fontSize: 10, fontWeight: 700, color: '#92400e', border: '1px solid #fde047' }}>ngrok http 3456</code></li>
-                <li>Copy <strong>HTTPS URL</strong> (https://abc123.ngrok.io)</li>
-                <li>Paste in <strong>Webhook URL</strong> above</li>
-                <li>Click <strong>"Register Webhooks"</strong></li>
-                <li>Verify in Shopify: Settings → Notifications → Webhooks</li>
-              </ol>
+              <p style={{ fontSize: 12, color: '#64748b', margin: '3px 0 0', fontWeight: 500 }}>Accept card payments at POS checkout</p>
             </div>
           </div>
-        </IntCard>
+
+          <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <FormField label="Gateway Provider">
+              <Select value={cfg.payment_gateway} onChange={e => f('payment_gateway', e.target.value)} style={{ border: '2px solid #e2e8f0', padding: '10px 12px' }}>
+                <option value="">- Select Provider -</option>
+                <option value="stripe">Stripe</option>
+                <option value="paypal">PayPal</option>
+                <option value="square">Square</option>
+                <option value="razorpay">Razorpay</option>
+                <option value="custom">Custom / Local</option>
+              </Select>
+            </FormField>
+
+            <FormField label="API Key / Publishable Key">
+              <Input 
+                placeholder="pk_live_..." 
+                value={cfg.payment_key} 
+                onChange={e => f('payment_key', e.target.value)} 
+                style={{ border: '2px solid #e2e8f0', padding: '10px 12px', fontFamily: 'monospace', fontSize: 12 }}
+              />
+            </FormField>
+
+            <FormField label="Secret Key">
+              <Input 
+                type="password" 
+                placeholder="sk_live_..." 
+                value={cfg.payment_secret} 
+                onChange={e => f('payment_secret', e.target.value)} 
+                style={{ border: '2px solid #e2e8f0', padding: '10px 12px', fontFamily: 'monospace', fontSize: 12 }}
+              />
+            </FormField>
+
+            {testResult['payment'] && (
+              <div style={{ background: testResult['payment'] === 'success' ? 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)' : 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)', border: `1px solid ${testResult['payment'] === 'success' ? '#86efac' : '#fca5a5'}`, borderRadius: 10, padding: '12px 16px', fontSize: 12, color: testResult['payment'] === 'success' ? '#047857' : '#b91c1c', fontWeight: 600, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.02)' }}>
+                {testResult['payment'] === 'success' ? '✅ Payment Gateway API settings are active and correct!' : `❌ Connection failed: ${testMessage['payment'] || 'Invalid credentials.'}`}
+              </div>
+            )}
+
+            <button 
+              style={{ 
+                ...C.btn2, 
+                justifyContent: 'center', 
+                padding: '12px', 
+                fontWeight: 600, 
+                border: '2px solid #e2e8f0', 
+                borderRadius: 10,
+                background: '#f8fafc',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                marginTop: 8
+              }} 
+              onClick={() => testConnection('payment')} 
+              disabled={testing['payment']}
+            >
+              <RefreshCw size={14} className={testing['payment'] ? 'animate-spin' : ''} />
+              {testing['payment'] ? 'Testing Connection...' : 'Test Gateway Connection'}
+            </button>
+          </div>
+        </div>
+
+        {/* Right Column: Shopify Integration with Internal Tabs */}
+        <div style={{ ...C.card, borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.03)' }}>
+          {/* Card Title Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '20px 24px', borderBottom: '1px solid #f1f5f9', background: 'linear-gradient(135deg, #fafbfd 0%, #ffffff 100%)' }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(209, 250, 229, 0.6)' }}>
+              <ShoppingBag size={22} color="#059669" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <p style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', margin: 0 }}>Shopify Integration</p>
+                {shopifyConnected ? (
+                  <span style={{ ...C.badge('#ecfdf5', '#059669'), display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', fontWeight: 600 }}>
+                    <CheckCircle size={11} /> Active
+                  </span>
+                ) : (
+                  <span style={{ ...C.badge('#f1f5f9', '#64748b'), display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px' }}>
+                    <XCircle size={11} /> Unconfigured
+                  </span>
+                )}
+              </div>
+              <p style={{ fontSize: 12, color: '#64748b', margin: '3px 0 0', fontWeight: 500 }}>Sync stock, products, and orders dynamically</p>
+            </div>
+          </div>
+
+          {/* Internal Tab Bar Switcher */}
+          <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', padding: '0 12px' }}>
+            <button 
+              onClick={() => setActiveShopifyTab(0)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '14px 20px',
+                fontSize: 13,
+                fontWeight: 600,
+                border: 'none',
+                background: 'transparent',
+                borderBottom: activeShopifyTab === 0 ? '3px solid #059669' : '3px solid transparent',
+                color: activeShopifyTab === 0 ? '#059669' : '#64748b',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                outline: 'none'
+              }}
+            >
+              <Settings size={15} />
+              Shopify Connection
+            </button>
+            <button 
+              onClick={() => setActiveShopifyTab(1)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '14px 20px',
+                fontSize: 13,
+                fontWeight: 600,
+                border: 'none',
+                background: 'transparent',
+                borderBottom: activeShopifyTab === 1 ? '3px solid #059669' : '3px solid transparent',
+                color: activeShopifyTab === 1 ? '#059669' : '#64748b',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                outline: 'none'
+              }}
+            >
+              <Webhook size={15} />
+              Bidirectional Sync
+            </button>
+          </div>
+
+          {/* Tab 0: Connection / Basic Settings */}
+          {activeShopifyTab === 0 && (
+            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <FormField label="Store Domain URL">
+                <div style={{ position: 'relative' }}>
+                  <Input 
+                    placeholder="your-store-name.myshopify.com" 
+                    value={cfg.shopify_store} 
+                    onChange={e => f('shopify_store', e.target.value)} 
+                    style={{ border: '2px solid #e2e8f0', padding: '10px 12px', paddingRight: 40 }}
+                  />
+                  {cfg.shopify_store && (
+                    <a href={`https://${cfg.shopify_store}/admin`} target="_blank" rel="noopener noreferrer" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#059669' }}>
+                      <ExternalLink size={16} />
+                    </a>
+                  )}
+                </div>
+              </FormField>
+
+              <FormField label="Admin API Access Token">
+                <Input 
+                  type="password" 
+                  placeholder="shpat_..." 
+                  value={cfg.shopify_token} 
+                  onChange={e => f('shopify_token', e.target.value)} 
+                  style={{ border: '2px solid #e2e8f0', padding: '10px 12px', fontFamily: 'monospace', fontSize: 12 }}
+                />
+              </FormField>
+
+              <div style={{ background: '#f8fafc', padding: '6px 16px', borderRadius: 12, border: '1px solid #f1f5f9', marginTop: 4 }}>
+                <Toggle 
+                  k="shopify_sync" 
+                  label="Auto-sync Products" 
+                  sub="Push product information and stock updates from IMS to Shopify automatically" 
+                />
+              </div>
+
+              {testResult['shopify'] && (
+                <div style={{ background: testResult['shopify'] === 'success' ? 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)' : 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)', border: `1px solid ${testResult['shopify'] === 'success' ? '#86efac' : '#fca5a5'}`, borderRadius: 10, padding: '12px 16px', fontSize: 12, color: testResult['shopify'] === 'success' ? '#047857' : '#b91c1c', fontWeight: 600, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.02)' }}>
+                  {testResult['shopify'] === 'success' ? '✅ Shopify connection is successfully verified! APIs are fully responsive.' : `❌ Connection failed: ${testMessage['shopify'] || 'Invalid details.'}`}
+                </div>
+              )}
+
+              <button 
+                style={{ 
+                  ...C.btn2, 
+                  justifyContent: 'center', 
+                  padding: '12px', 
+                  fontWeight: 600, 
+                  border: '2px solid #e2e8f0', 
+                  borderRadius: 10,
+                  background: '#f8fafc',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  marginTop: 8
+                }} 
+                onClick={() => testConnection('shopify')} 
+                disabled={testing['shopify']}
+              >
+                <RefreshCw size={14} className={testing['shopify'] ? 'animate-spin' : ''} />
+                {testing['shopify'] ? 'Testing API...' : 'Test Shopify Connection'}
+              </button>
+            </div>
+          )}
+
+          {/* Tab 1: Bidirectional Sync */}
+          {activeShopifyTab === 1 && (
+            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Info banner */}
+              <div style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', border: '1px solid #93c5fd', borderRadius: 12, padding: '12px 16px', display: 'flex', gap: 10 }}>
+                <span style={{ fontSize: 18, flexShrink: 0 }}>💡</span>
+                <p style={{ fontSize: 12, color: '#1e40af', margin: 0, lineHeight: 1.5, fontWeight: 600 }}>
+                  Enable real-time synchronization from Shopify to IMS. Any inventory adjustments or item additions made inside Shopify will instantly sync back to your IMS system.
+                </p>
+              </div>
+
+              <FormField label="Webhook URL (ngrok HTTPS URL)">
+                <div style={{ position: 'relative' }}>
+                  <Input 
+                    placeholder="https://abc1234.ngrok-free.app" 
+                    value={cfg.shopify_webhook_url} 
+                    onChange={e => f('shopify_webhook_url', e.target.value)}
+                    style={{ fontFamily: 'monospace', fontSize: 12, paddingRight: 40, background: '#fafbfc', border: '2px solid #e2e8f0', padding: '10px 12px' }}
+                  />
+                  {cfg.shopify_webhook_url && (
+                    <button onClick={() => copyToClipboard(cfg.shopify_webhook_url)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', cursor: 'pointer', color: copied ? '#059669' : '#64748b', padding: 4 }}>
+                      {copied ? <Check size={16} /> : <Copy size={16} />}
+                    </button>
+                  )}
+                </div>
+              </FormField>
+
+              <FormField label="Webhook Secret (Optional Custom App API Secret)">
+                <Input 
+                  type="password" 
+                  placeholder="Secret key for verifying signatures..." 
+                  value={cfg.shopify_webhook_secret} 
+                  onChange={e => f('shopify_webhook_secret', e.target.value)} 
+                  style={{ fontFamily: 'monospace', fontSize: 12, background: '#fafbfc', border: '2px solid #e2e8f0', padding: '10px 12px' }} 
+                />
+              </FormField>
+
+              {/* Status Alert logs */}
+              {webhookStatus && (
+                <div style={{ background: webhookStatus.includes('✅') ? 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)' : webhookStatus.includes('🔄') ? 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' : 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)', border: `1px solid ${webhookStatus.includes('✅') ? '#86efac' : webhookStatus.includes('🔄') ? '#93c5fd' : '#fca5a5'}`, borderRadius: 10, padding: '12px 16px', fontSize: 12, color: webhookStatus.includes('✅') ? '#047857' : webhookStatus.includes('🔄') ? '#1e40af' : '#b91c1c', fontWeight: 700, boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+                  {webhookStatus}
+                </div>
+              )}
+
+              {/* Action Buttons list */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
+                <button 
+                  style={{ 
+                    width: '100%', 
+                    padding: '12px', 
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', 
+                    color: '#fff', 
+                    border: 'none', 
+                    borderRadius: 10, 
+                    fontSize: 13, 
+                    fontWeight: 700, 
+                    cursor: 'pointer', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: 8, 
+                    transition: 'all 0.3s', 
+                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)' 
+                  }} 
+                  onClick={testWebhookUrl}
+                >
+                  <RefreshCw size={15} />
+                  Test Webhook Connection
+                </button>
+                
+                <button 
+                  style={{ 
+                    width: '100%', 
+                    padding: '12px', 
+                    background: registeringWebhooks ? 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)' : 'linear-gradient(135deg, #059669 0%, #047857 100%)', 
+                    color: '#fff', 
+                    border: 'none', 
+                    borderRadius: 10, 
+                    fontSize: 13, 
+                    fontWeight: 700, 
+                    cursor: registeringWebhooks ? 'not-allowed' : 'pointer', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: 8, 
+                    transition: 'all 0.3s', 
+                    boxShadow: registeringWebhooks ? 'none' : '0 4px 12px rgba(5, 150, 105, 0.3)' 
+                  }} 
+                  onClick={registerWebhooks} 
+                  disabled={registeringWebhooks}
+                >
+                  <Webhook size={15} />
+                  {registeringWebhooks ? 'Registering Webhooks...' : 'Register Webhooks with Shopify'}
+                </button>
+
+                <div style={{ height: '1px', background: '#e2e8f0', margin: '6px 0' }} />
+
+                <button 
+                  style={{ 
+                    width: '100%', 
+                    padding: '12px', 
+                    background: importingProducts ? 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)' : 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)', 
+                    color: '#fff', 
+                    border: 'none', 
+                    borderRadius: 10, 
+                    fontSize: 13, 
+                    fontWeight: 700, 
+                    cursor: importingProducts ? 'not-allowed' : 'pointer', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: 8, 
+                    transition: 'all 0.3s', 
+                    boxShadow: importingProducts ? 'none' : '0 4px 12px rgba(124, 58, 237, 0.3)' 
+                  }} 
+                  onClick={handleBulkImport} 
+                  disabled={importingProducts}
+                >
+                  <ShoppingBag size={15} />
+                  {importingProducts ? 'Importing Products...' : 'Bulk Import Products from Shopify'}
+                </button>
+              </div>
+
+              {/* Instructions banner */}
+              <div style={{ background: 'linear-gradient(135deg, #fefce8 0%, #fef9c3 100%)', border: '1px solid #fde047', borderRadius: 10, padding: '14px', marginTop: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style={{ fontSize: 15 }}>📋</span>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: '#854d0e', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Quick Webhook Guide</p>
+                </div>
+                <ol style={{ fontSize: 11, color: '#713f12', margin: 0, paddingLeft: 18, lineHeight: 1.7, fontWeight: 600 }}>
+                  <li>Run <code style={{ background: '#fef3c7', padding: '2px 6px', borderRadius: 4, fontFamily: 'monospace', fontSize: 10, fontWeight: 700, color: '#92400e', border: '1px solid #fde047' }}>ngrok http 3456</code> in your terminal</li>
+                  <li>Copy the generated **HTTPS URL** (e.g. https://abc1234.ngrok-free.app)</li>
+                  <li>Paste in the **Webhook URL** field above</li>
+                  <li>Click **"Register Webhooks with Shopify"** to enable real-time sync!</li>
+                </ol>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)', border: '2px solid #fde68a', borderRadius: 12, padding: '12px 16px', fontSize: 12, color: '#92400e', fontWeight: 600, boxShadow: '0 4px 12px rgba(253, 230, 138, 0.3)' }}>
-        <strong>🔒 Security:</strong> API keys stored locally. Use environment variables in production.
+      {/* Footer Alert */}
+      <div style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)', border: '1px solid #fde68a', borderRadius: 12, padding: '14px 20px', fontSize: 12, color: '#92400e', fontWeight: 600, boxShadow: '0 4px 12px rgba(253, 230, 138, 0.1)', marginTop: 8 }}>
+        <strong>🔒 Privacy & Security:</strong> All API keys, Access Tokens, and configurations are saved locally on your computer inside the Electron workspace.
       </div>
     </div>
   )
