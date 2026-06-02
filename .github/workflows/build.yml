@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - Flori_management
   workflow_dispatch:
 
 jobs:
