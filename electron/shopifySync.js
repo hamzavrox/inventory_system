@@ -259,4 +259,9 @@ async function deleteProduct(shopifyProductId) {
   }
 }
 
-module.exports = { syncProduct, deleteProduct }
+function clearLocationCache() {
+  cachedLocationId = null
+  console.log('[Shopify Sync]: Location ID cache cleared')
+}
+
+module.exports = { syncProduct, deleteProduct, clearLocationCache }

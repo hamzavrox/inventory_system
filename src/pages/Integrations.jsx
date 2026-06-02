@@ -15,6 +15,7 @@ export default function Integrations() {
   const [testMessage, setTestMessage] = useState({})
   const [webhookStatus, setWebhookStatus] = useState('')
   const [registeringWebhooks, setRegisteringWebhooks] = useState(false)
+  const [importingProducts, setImportingProducts] = useState(false)
   const [copied, setCopied] = useState(false)
   const f = (k, v) => setCfg(s => ({ ...s, [k]: v }))
 
@@ -150,6 +151,31 @@ export default function Integrations() {
     }
     
     setTimeout(() => setWebhookStatus(''), 6000)
+  }
+
+  const handleBulkImport = async () => {
+    if (!cfg.shopify_store || !cfg.shopify_token) {
+      setWebhookStatus('⚠️ Please configure Shopify store and token first')
+      setTimeout(() => setWebhookStatus(''), 3000)
+      return
+    }
+
+    setImportingProducts(true)
+    setWebhookStatus('🔄 Importing products from Shopify...')
+
+    try {
+      const result = await window.api.shopify.importAll()
+      if (result.success) {
+        setWebhookStatus(`✅ Bulk Import Completed! Imported: ${result.imported}, Skipped (already exist): ${result.skipped}, Errors: ${result.errors}`)
+      } else {
+        setWebhookStatus(`❌ Bulk Import Failed: ${result.error}`)
+      }
+    } catch (err) {
+      setWebhookStatus(`❌ Bulk Import Error: ${err.message}`)
+    }
+
+    setImportingProducts(false)
+    setTimeout(() => setWebhookStatus(''), 10000)
   }
 
   const Toggle = ({ k, label, sub }) => (
@@ -289,9 +315,14 @@ export default function Integrations() {
               Test Connection
             </button>
             
-            <button style={{ width: '100%', padding: '12px 18px', background: registeringWebhooks ? 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)' : 'linear-gradient(135deg, #059669 0%, #047857 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: registeringWebhooks ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.3s', boxShadow: registeringWebhooks ? 'none' : '0 6px 18px rgba(5, 150, 105, 0.4)', letterSpacing: '0.02em' }} onClick={registerWebhooks} disabled={registeringWebhooks}>
+            <button style={{ width: '100%', padding: '12px 18px', background: registeringWebhooks ? 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)' : 'linear-gradient(135deg, #059669 0%, #047857 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: registeringWebhooks ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.3s', boxShadow: registeringWebhooks ? 'none' : '0 6px 18px rgba(5, 150, 105, 0.4)', letterSpacing: '0.02em', marginBottom: 10 }} onClick={registerWebhooks} disabled={registeringWebhooks}>
               <Webhook size={15} />
               {registeringWebhooks ? 'Registering Webhooks...' : 'Register Webhooks with Shopify'}
+            </button>
+
+            <button style={{ width: '100%', padding: '12px 18px', background: importingProducts ? 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)' : 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: importingProducts ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.3s', boxShadow: importingProducts ? 'none' : '0 6px 18px rgba(124, 58, 237, 0.4)', letterSpacing: '0.02em' }} onClick={handleBulkImport} disabled={importingProducts}>
+              <ShoppingBag size={15} />
+              {importingProducts ? 'Importing Products...' : 'Bulk Import Products from Shopify'}
             </button>
             
             <div style={{ background: 'linear-gradient(135deg, #fefce8 0%, #fef9c3 100%)', border: '2px solid #fde047', borderRadius: 10, padding: '12px 14px', marginTop: 14 }}>

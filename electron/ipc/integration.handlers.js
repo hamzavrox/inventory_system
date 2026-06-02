@@ -86,6 +86,15 @@ module.exports = function registerIntegrationHandlers() {
     try {
       const p = path.join(app.getPath('userData'), 'integrations.json')
       fs.writeFileSync(p, JSON.stringify(cfg), 'utf8')
+      
+      // Clear location ID cache on settings save
+      try {
+        const { clearLocationCache } = require('../shopifySync')
+        clearLocationCache()
+      } catch (err) {
+        console.error('[Shopify Cache Clear Error]:', err.message)
+      }
+      
       return { success: true }
     } catch (e) {
       return { success: false, message: e.message }

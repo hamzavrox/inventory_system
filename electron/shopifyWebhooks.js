@@ -189,7 +189,7 @@ function handleProductCreate(shopifyProduct) {
     category_id: null,
     price: parseFloat(variant?.price || 0),
     cost_price: 0,
-    quantity: 0,  // Updated by inventory_levels/update webhook
+    quantity: variant?.inventory_quantity !== undefined ? Number(variant.inventory_quantity) : 0,  // Pull initial quantity if available
     unit: 'pcs',
     low_stock_threshold: 10,
     shopify_product_id: String(shopifyProduct.id),
@@ -234,6 +234,7 @@ function handleProductUpdate(shopifyProduct) {
       sku = ?,
       barcode = ?,
       price = ?,
+      quantity = CASE WHEN ? IS NOT NULL THEN ? ELSE quantity END,
       shopify_variant_id = ?,
       shopify_inventory_item_id = ?,
       synced = 1,
@@ -244,6 +245,8 @@ function handleProductUpdate(shopifyProduct) {
     variant?.sku || null,
     variant?.barcode || null,
     parseFloat(variant?.price || 0),
+    variant?.inventory_quantity !== undefined ? Number(variant.inventory_quantity) : null,
+    variant?.inventory_quantity !== undefined ? Number(variant.inventory_quantity) : null,
     variant ? String(variant.id) : null,
     variant ? String(variant.inventory_item_id) : null,
     String(shopifyProduct.id)
