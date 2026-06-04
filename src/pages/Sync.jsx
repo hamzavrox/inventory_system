@@ -31,6 +31,8 @@ export default function Sync() {
   const [driveMsg, setDriveMsg] = useState('')
   const [driveUploading, setDriveUploading] = useState(false)
   const [driveProgress, setDriveProgress] = useState(0)
+  const [driveClientId, setDriveClientId] = useState('')
+  const [driveClientSecret, setDriveClientSecret] = useState('')
 
   const timerRef     = useRef(null)
   const autoTimerRef = useRef(null)
@@ -43,6 +45,10 @@ export default function Sync() {
     loadStatus()
     loadBackups()
     loadDriveStatus()
+    window.api.gdrive?.getCredentials().then(creds => {
+      setDriveClientId(creds.clientId || '')
+      setDriveClientSecret(creds.clientSecret || '')
+    }).catch(() => {})
     if (localStorage.getItem('db_restored_msg')) {
       localStorage.removeItem('db_restored_msg')
       setRestoreMsg('✔ Database restored successfully! Please restart the app.')
@@ -102,8 +108,20 @@ export default function Sync() {
 
   const handleDriveConnect = async () => {
     if (!window.api.gdrive) return setDriveMsg('✖ Please restart the app to apply the latest updates.')
+    const cid = driveClientId.trim()
+    const sec = driveClientSecret.trim()
+    if (!cid || !sec) {
+      return setDriveMsg('✖ Please enter both Client ID and Client Secret.')
+    }
     setDriveConnecting(true); setDriveMsg('')
     try {
+      const saveRes = await window.api.gdrive.saveCredentials({ clientId: cid, clientSecret: sec })
+      if (!saveRes.success) {
+        setDriveMsg(`✖ Failed to save credentials: ${saveRes.error}`)
+        setDriveConnecting(false)
+        return
+      }
+
       const res = await window.api.gdrive.connect()
       if (res.error) setDriveMsg(`✖ ${res.error}`)
       else setDriveStatus(res)
@@ -356,6 +374,20 @@ export default function Sync() {
 
               <Msg msg={driveMsg} />
               
+              {!driveStatus.connected && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16, borderTop: '1px solid #f1f5f9', paddingTop: 14 }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 4px 0' }}>Google API Credentials</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <label style={{ ...C.label, whiteSpace: 'nowrap', width: 95, margin: 0 }}>Client ID</label>
+                    <input style={{ ...C.input, flex: 1 }} placeholder="Enter Client ID..." value={driveClientId} onChange={e => setDriveClientId(e.target.value)} />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <label style={{ ...C.label, whiteSpace: 'nowrap', width: 95, margin: 0 }}>Client Secret</label>
+                    <input type="password" style={{ ...C.input, flex: 1 }} placeholder="Enter Client Secret..." value={driveClientSecret} onChange={e => setDriveClientSecret(e.target.value)} />
+                  </div>
+                </div>
+              )}
+
               {!driveStatus.connected ? (
                 <button style={{ ...C.btn, width: '100%', justifyContent: 'center' }} onClick={handleDriveConnect} disabled={driveConnecting}>
                   <Cloud size={14} />{driveConnecting ? 'Connecting...' : 'Connect Google Drive'}

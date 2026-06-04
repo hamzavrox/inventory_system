@@ -338,6 +338,68 @@ module.exports = function registerAdminHandlers() {
     }
   })
 
+  ipcMain.handle('gdrive:getCredentials', () => {
+    return {
+      clientId: process.env.GDRIVE_CLIENT_ID || '',
+      clientSecret: process.env.GDRIVE_CLIENT_SECRET || ''
+    }
+  })
+
+  ipcMain.handle('gdrive:saveCredentials', (_, { clientId, clientSecret }) => {
+    process.env.GDRIVE_CLIENT_ID = clientId
+    process.env.GDRIVE_CLIENT_SECRET = clientSecret
+
+    try {
+      const envPaths = [
+        path.join(process.cwd(), '.env'),
+        path.join(app.getAppPath(), '.env'),
+        path.join(path.dirname(app.getPath('exe')), '.env')
+      ]
+      let envPath = envPaths[0]
+      for (const p of envPaths) {
+        if (fs.existsSync(p)) {
+          envPath = p
+          break
+        }
+      }
+
+      let content = ''
+      if (fs.existsSync(envPath)) {
+        content = fs.readFileSync(envPath, 'utf8')
+      }
+
+      const lines = content.split(/\r?\n/)
+      let hasClientId = false
+      let hasClientSecret = false
+
+      const newLines = lines.map(line => {
+        const trimmed = line.trim()
+        if (trimmed.startsWith('GDRIVE_CLIENT_ID=') || trimmed.startsWith('# GDRIVE_CLIENT_ID=')) {
+          hasClientId = true
+          return `GDRIVE_CLIENT_ID=${clientId}`
+        }
+        if (trimmed.startsWith('GDRIVE_CLIENT_SECRET=') || trimmed.startsWith('# GDRIVE_CLIENT_SECRET=')) {
+          hasClientSecret = true
+          return `GDRIVE_CLIENT_SECRET=${clientSecret}`
+        }
+        return line
+      })
+
+      if (!hasClientId) {
+        newLines.push(`GDRIVE_CLIENT_ID=${clientId}`)
+      }
+      if (!hasClientSecret) {
+        newLines.push(`GDRIVE_CLIENT_SECRET=${clientSecret}`)
+      }
+
+      fs.writeFileSync(envPath, newLines.join('\n'), 'utf8')
+      return { success: true }
+    } catch (e) {
+      console.error('Failed to save .env file:', e)
+      return { success: false, error: e.message }
+    }
+  })
+
   // ── Cleanup deleted records ───────────────────────────────────────────────
   ipcMain.handle('db:cleanup', () => {
     const db = getDB()

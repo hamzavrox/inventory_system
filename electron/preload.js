@@ -169,6 +169,8 @@ contextBridge.exposeInMainWorld('api', {
     disconnect: () => invoke('gdrive:disconnect'),
     status: () => invoke('gdrive:status'),
     uploadBackup: (backupPath) => invoke('gdrive:uploadBackup', backupPath),
+    getCredentials: () => invoke('gdrive:getCredentials'),
+    saveCredentials: (creds) => invoke('gdrive:saveCredentials', creds),
   },
 
   // â”€â”€ Events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
